@@ -121,6 +121,25 @@
       box-shadow: var(--glow-pink);
     }
 
+    .screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .screen-header h2 {
+      margin: 0;
+    }
+
+    .compact-home {
+      min-height: 34px;
+      padding: 6px 10px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
     button, select {
       border: 1px solid rgba(83, 174, 255, 0.72);
       border-radius: 10px;
@@ -243,23 +262,41 @@
       grid-template-columns: minmax(0, auto) minmax(180px, 260px);
     }
 
+    .playfield-with-rails,
     .setup-playfield {
       display: grid;
       grid-template-columns: auto minmax(0, auto) auto;
-      align-items: center;
+      align-items: stretch;
       justify-content: center;
       gap: 8px;
     }
 
-    .setup-side-control {
-      display: grid;
-      gap: 8px;
-      align-content: center;
+    .playfield-with-rails .board-wrap {
+      align-self: center;
     }
 
+    .play-rail,
+    .setup-side-control {
+      display: grid;
+      grid-template-rows: 1fr auto auto;
+      gap: 8px;
+      align-content: stretch;
+      align-self: stretch;
+      padding-bottom: 6px;
+    }
+
+    .play-rail .control-button,
     .setup-side-control .control-button {
       width: 72px;
       min-height: 72px;
+    }
+
+    .rail-top {
+      grid-row: 2;
+    }
+
+    .rail-bottom {
+      grid-row: 3;
     }
 
     .board-wrap {
@@ -341,6 +378,11 @@
 
     .setup-actions {
       grid-template-columns: 1fr;
+    }
+
+    .safe-home-button {
+      border-color: rgba(255, 255, 255, 0.34);
+      background: linear-gradient(180deg, rgba(18, 26, 48, 0.96), rgba(5, 10, 24, 0.96));
     }
 
     .side-panel h3 {
@@ -517,9 +559,18 @@
       }
 
       body.game-locked h2 {
-        margin-bottom: 5px;
         font-size: 15px;
         line-height: 1.15;
+      }
+
+      body.game-locked .screen-header {
+        margin-bottom: 5px;
+      }
+
+      body.game-locked .compact-home {
+        min-height: 28px;
+        padding: 4px 8px;
+        font-size: 11px;
       }
 
       .game-layout {
@@ -540,23 +591,27 @@
       }
 
       #setupScreen .setup-layout {
-        height: calc(100% - 22px);
+        height: calc(100% - 33px);
         display: grid;
         grid-template-columns: 1fr;
         align-content: start;
         gap: 5px;
       }
 
-      #setupScreen .setup-playfield {
+      #setupScreen .setup-playfield,
+      #izakayaScreen .playfield-with-rails {
         grid-template-columns: 52px minmax(0, auto) 52px;
         gap: 4px;
       }
 
-      #setupScreen .setup-side-control {
+      #setupScreen .setup-side-control,
+      #izakayaScreen .play-rail {
         gap: 6px;
+        padding-bottom: 2px;
       }
 
-      #setupScreen .setup-side-control .control-button {
+      #setupScreen .setup-side-control .control-button,
+      #izakayaScreen .play-rail .control-button {
         width: 52px;
         min-height: 58px;
         padding: 4px 2px;
@@ -564,7 +619,8 @@
         font-size: 10px;
       }
 
-      #setupScreen .setup-side-control .control-button::before {
+      #setupScreen .setup-side-control .control-button::before,
+      #izakayaScreen .play-rail .control-button::before {
         width: 30px;
         height: 30px;
         font-size: 20px;
@@ -575,6 +631,10 @@
       }
 
       #setupScreen .setup-board-wrap .target-note {
+        display: none;
+      }
+
+      #izakayaScreen .target-note {
         display: none;
       }
 
@@ -608,7 +668,7 @@
       #setupScreen .setup-actions {
         grid-column: 1 / -1;
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 5px;
         margin-top: 0;
       }
@@ -679,20 +739,23 @@
     </section>
 
     <section id="setupScreen" class="screen">
-      <h2>初期盤面作成</h2>
+      <div class="screen-header">
+        <h2>初期盤面作成</h2>
+        <button class="safe-home-button compact-home" id="setupHome">ホーム</button>
+      </div>
       <div class="game-layout setup-layout">
         <div class="setup-playfield">
-          <div class="setup-side-control setup-left-rail">
-            <button class="control-button" id="setupLeft" data-icon="←">左移動</button>
+          <div class="setup-side-control setup-left-rail play-rail">
+            <button class="control-button rail-top" id="setupRotate" data-icon="↻">回転</button>
+            <button class="control-button rail-bottom" id="setupLeft" data-icon="←">左移動</button>
           </div>
           <div class="board-wrap setup-board-wrap">
             <canvas id="setupBoard" width="300" height="600"></canvas>
             <p class="target-note">ゲームオーバー時の盤面を自動保存します。</p>
           </div>
-          <div class="setup-side-control setup-right-rail">
-            <button class="control-button" id="setupRight" data-icon="→">右移動</button>
-            <button class="control-button" id="setupRotate" data-icon="↻">回転</button>
-            <button class="control-button primary" id="setupDrop" data-icon="✓">配置</button>
+          <div class="setup-side-control setup-right-rail play-rail">
+            <button class="control-button primary rail-top" id="setupDrop" data-icon="✓">配置</button>
+            <button class="control-button rail-bottom" id="setupRight" data-icon="→">右移動</button>
           </div>
         </div>
         <div class="card side-panel setup-panel">
@@ -707,21 +770,33 @@
             <button id="setupPause">一時停止</button>
             <button id="setupRestart">もう一度作る</button>
             <button class="primary" id="setupStartIzakaya" disabled>本編を開始</button>
-            <button id="setupHome">ホーム</button>
           </div>
         </div>
       </div>
     </section>
 
     <section id="izakayaScreen" class="screen">
-      <h2>居酒屋ブロック本編</h2>
+      <div class="screen-header">
+        <h2>居酒屋ブロック本編</h2>
+        <button class="safe-home-button compact-home" id="izakayaHome">ホーム</button>
+      </div>
       <div class="game-layout">
-        <div class="board-wrap">
-          <div class="board-countdown" id="boardCountdown"><span>残り</span><strong>-</strong></div>
-          <div class="board-stage">
-            <canvas id="izakayaBoard" width="300" height="600"></canvas>
+        <div class="playfield-with-rails izakaya-playfield">
+          <div class="play-rail left-rail">
+            <button class="control-button rail-top" id="izakayaRotate" data-icon="↻" disabled>回転</button>
+            <button class="control-button rail-bottom" id="izakayaLeft" data-icon="←" disabled>左移動</button>
           </div>
-          <p class="target-note">黄色の線が、初期盤面の一番下の攻略対象ラインです。</p>
+          <div class="board-wrap">
+            <div class="board-countdown" id="boardCountdown"><span>残り</span><strong>-</strong></div>
+            <div class="board-stage">
+              <canvas id="izakayaBoard" width="300" height="600"></canvas>
+            </div>
+            <p class="target-note">黄色の線が、初期盤面の一番下の攻略対象ラインです。</p>
+          </div>
+          <div class="play-rail right-rail">
+            <button class="control-button primary rail-top" id="confirmPiece" data-icon="✓" disabled>配置確定</button>
+            <button class="control-button rail-bottom" id="izakayaRight" data-icon="→" disabled>右移動</button>
+          </div>
         </div>
         <div class="card side-panel">
           <div class="stats">
@@ -739,15 +814,8 @@
           </div>
           <h3>ブロックを除外する</h3>
           <div class="mino-buttons" id="excludeButtons"></div>
-          <div class="controls">
-            <button class="control-button" id="izakayaLeft" data-icon="←" disabled>左移動</button>
-            <button class="control-button" id="izakayaRight" data-icon="→" disabled>右移動</button>
-            <button class="control-button" id="izakayaRotate" data-icon="↻" disabled>回転</button>
-            <button class="control-button primary" id="confirmPiece" data-icon="✓" disabled>配置確定</button>
-          </div>
           <div class="inline-actions">
             <button class="danger" id="giveUpButton">ギブアップ</button>
-            <button id="izakayaHome">ホーム</button>
           </div>
         </div>
       </div>
@@ -1087,6 +1155,16 @@
       showScreen("homeScreen");
     }
 
+    function confirmGoHome() {
+      const ok = confirm("ホームに戻りますか？進行中の操作は中断されます。");
+      if (ok) goHome();
+    }
+
+    function confirmGiveUp() {
+      const ok = confirm("ギブアップしますか？このプレイは終了します。");
+      if (ok) finishIzakaya(false, "ギブアップしました。");
+    }
+
     function saveSetupBoard() {
       const targetMask = emptyMask();
       targetMask[HEIGHT - 1] = Array(WIDTH).fill(true);
@@ -1401,8 +1479,8 @@
       $("historyButton").addEventListener("click", showHistory);
       $("rulesHome").addEventListener("click", () => showScreen("homeScreen"));
       $("historyHome").addEventListener("click", () => showScreen("homeScreen"));
-      $("setupHome").addEventListener("click", goHome);
-      $("izakayaHome").addEventListener("click", goHome);
+      $("setupHome").addEventListener("click", confirmGoHome);
+      $("izakayaHome").addEventListener("click", confirmGoHome);
       $("resultHome").addEventListener("click", goHome);
       $("setupLeft").addEventListener("click", () => moveSetup(-1));
       $("setupRight").addEventListener("click", () => moveSetup(1));
@@ -1421,7 +1499,7 @@
       $("izakayaRight").addEventListener("click", () => moveIzakaya(1));
       $("izakayaRotate").addEventListener("click", rotateIzakaya);
       $("confirmPiece").addEventListener("click", confirmIzakayaPiece);
-      $("giveUpButton").addEventListener("click", () => finishIzakaya(false, "ギブアップしました。"));
+      $("giveUpButton").addEventListener("click", confirmGiveUp);
       $("resultRetry").addEventListener("click", startIzakayaFromSaved);
       document.addEventListener("keydown", handleKey);
       document.addEventListener("touchmove", (event) => {
