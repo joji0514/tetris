@@ -259,7 +259,7 @@
     .play-rail,
     .setup-side-control {
       display: grid;
-      grid-template-rows: repeat(6, minmax(0, auto));
+      grid-template-rows: auto auto 1fr auto auto auto;
       gap: 8px;
       align-content: center;
       align-self: stretch;
@@ -273,11 +273,12 @@
     }
 
     .rail-top {
-      grid-row: 3;
+      grid-row: 4;
     }
 
     .rail-bottom {
-      grid-row: 4;
+      grid-row: 5;
+      align-self: end;
     }
 
     .rail-button {
@@ -374,7 +375,8 @@
     .rail-exclude {
       display: grid;
       gap: 4px;
-      grid-row: 5 / span 2;
+      grid-row: 3;
+      align-self: end;
     }
 
     .rail-exclude-title {
@@ -576,10 +578,15 @@
       }
 
       #setupScreen {
-        --cell: max(12px, min(calc(10vw - 15.2px), calc(5svh - 4.3px), 25px));
+        --cell: max(11px, min(calc(10vw - 15.2px), calc(5svh - 5.5px), 25px));
       }
 
-      #setupScreen .setup-layout {
+      #izakayaScreen {
+        --cell: max(10px, min(calc(10vw - 15.2px), calc(4.166svh - 3.6px), 22px));
+      }
+
+      #setupScreen .setup-layout,
+      #izakayaScreen .game-layout {
         height: 100%;
         display: grid;
         grid-template-columns: 1fr;
@@ -595,14 +602,15 @@
 
       #setupScreen .setup-side-control,
       #izakayaScreen .play-rail {
+        grid-template-rows: 30px 30px minmax(0, 1fr) 48px 48px;
         gap: 6px;
-        padding-bottom: 2px;
+        padding-bottom: 0;
       }
 
       #setupScreen .setup-side-control .control-button,
       #izakayaScreen .play-rail .control-button {
         width: 64px;
-        min-height: 50px;
+        min-height: 48px;
         padding: 4px 2px;
         border-radius: 999px;
         font-size: 10px;
@@ -665,9 +673,9 @@
 
       .rail-button {
         width: 64px;
-        min-height: 34px;
+        min-height: 30px;
         padding: 4px 3px;
-        font-size: 10px;
+        font-size: 9px;
       }
 
       .rail-exclude {
@@ -682,19 +690,19 @@
       }
 
       .rail-exclude .mino-buttons button {
-        min-height: 28px;
+        min-height: 20px;
         padding: 2px;
       }
 
       .rail-exclude .mino-icon {
-        grid-template-columns: repeat(4, 7px);
-        grid-auto-rows: 7px;
+        grid-template-columns: repeat(4, 5px);
+        grid-auto-rows: 5px;
         gap: 1px;
       }
 
       .rail-exclude .mino-icon-cell {
-        width: 7px;
-        height: 7px;
+        width: 5px;
+        height: 5px;
         border-radius: 2px;
       }
 
