@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>居酒屋ブロック</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #030711;
+      --panel: rgba(8, 15, 33, 0.84);
+      --panel-soft: rgba(13, 29, 64, 0.9);
+      --text: #f8fbff;
+      --muted: #b9c7df;
+      --accent: #ff9f1c;
+      --danger: #ff3864;
+      --ok: #00d4ff;
+      --line: rgba(121, 165, 255, 0.32);
+      --target: #facc15;
+      --cell: min(8.4vw, 26px);
+      --cyan: #00d4ff;
+      --pink: #ff4bd8;
+      --purple: #8a5cff;
+      --gold: #ffb020;
+      --glass: rgba(6, 13, 32, 0.78);
+      --glow-cyan: 0 0 12px rgba(0, 212, 255, 0.62), 0 0 28px rgba(0, 118, 255, 0.26);
+      --glow-pink: 0 0 12px rgba(255, 75, 216, 0.66), 0 0 30px rgba(255, 56, 100, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255, 55, 135, 0.2), transparent 28%),
+        radial-gradient(circle at 80% 12%, rgba(0, 212, 255, 0.18), transparent 30%),
+        linear-gradient(180deg, rgba(7, 10, 25, 0.68), rgba(2, 5, 14, 0.96)),
+        repeating-linear-gradient(90deg, rgba(0, 212, 255, 0.07) 0 1px, transparent 1px 92px),
+        var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(115deg, transparent 0 12%, rgba(255, 98, 0, 0.1) 12% 13%, transparent 13% 26%, rgba(0, 212, 255, 0.08) 26% 27%, transparent 27%),
+        radial-gradient(ellipse at bottom, rgba(120, 40, 255, 0.16), transparent 50%);
+      mix-blend-mode: screen;
+    }
+
+    main {
+      position: relative;
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: max(18px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+
+    h1, h2, h3, p {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: clamp(42px, 11vw, 92px);
+      line-height: 0.98;
+      text-align: center;
+      letter-spacing: 0.08em;
+      color: #fff7fb;
+      text-shadow: 0 0 8px #ff4b6e, 0 0 24px #ff2f7a, 0 0 48px rgba(255, 64, 128, 0.7);
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      letter-spacing: 0.04em;
+      text-shadow: var(--glow-cyan);
+    }
+
+    h2::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: var(--purple);
+      box-shadow: var(--glow-pink);
+    }
+
+    button, select {
+      border: 1px solid rgba(83, 174, 255, 0.72);
+      border-radius: 10px;
+      padding: 11px 14px;
+      min-height: 44px;
+      background: linear-gradient(180deg, rgba(16, 37, 83, 0.96), rgba(5, 18, 46, 0.96));
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: inset 0 0 18px rgba(0, 212, 255, 0.12), 0 0 16px rgba(0, 118, 255, 0.2);
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+    }
+
+    button.primary {
+      border-color: rgba(255, 122, 168, 0.95);
+      background: linear-gradient(180deg, rgba(255, 70, 112, 0.96), rgba(132, 16, 54, 0.98));
+      box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.18), var(--glow-pink);
+    }
+
+    button.danger {
+      border-color: rgba(255, 115, 115, 0.95);
+      background: linear-gradient(180deg, rgba(255, 78, 96, 0.96), rgba(91, 16, 42, 0.98));
+    }
+
+    button.ok {
+      border-color: rgba(255, 176, 32, 0.95);
+      background: linear-gradient(180deg, rgba(242, 150, 26, 0.95), rgba(98, 44, 0, 0.98));
+      color: #fff8e8;
+      box-shadow: inset 0 0 18px rgba(255, 245, 180, 0.18), 0 0 18px rgba(255, 158, 26, 0.28);
+    }
+
+    button:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(10, 18, 42, 0.9), rgba(4, 10, 26, 0.9));
+      border: 1px solid rgba(129, 104, 255, 0.72);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: inset 0 0 26px rgba(0, 212, 255, 0.07), 0 0 18px rgba(138, 92, 255, 0.22), 0 22px 48px rgba(0, 0, 0, 0.45);
+    }
+
+    .home-actions,
+    .button-grid,
+    .controls,
+    .inline-actions,
+    .mino-buttons {
+      display: grid;
+      gap: 10px;
+    }
+
+    .home-actions {
+      max-width: 520px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, rgba(9, 15, 33, 0.36), rgba(5, 9, 22, 0.64));
+      border: 0;
+      box-shadow: none;
+    }
+
+    .home-actions button {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      align-items: center;
+      gap: 12px;
+      min-height: 66px;
+      text-align: left;
+      border-color: rgba(108, 189, 255, 0.86);
+      background: linear-gradient(90deg, rgba(12, 30, 70, 0.95), rgba(6, 13, 32, 0.95));
+    }
+
+    .home-actions button::before,
+    .control-button::before {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 22px;
+      box-shadow: 0 0 16px currentColor;
+    }
+
+    .home-actions button::before {
+      content: attr(data-icon);
+      color: var(--cyan);
+    }
+
+    .home-actions button.primary::before {
+      color: var(--gold);
+    }
+
+    .button-sub {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, auto) minmax(220px, 320px);
+      align-items: start;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .board-wrap {
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+    }
+
+    .board-stage {
+      display: grid;
+      justify-items: center;
+    }
+
+    .board-countdown {
+      display: inline-flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+      min-width: 92px;
+      padding: 4px 10px;
+      border: 1px solid rgba(191, 118, 255, 0.86);
+      border-radius: 999px;
+      background: rgba(9, 13, 32, 0.84);
+      color: #fde68a;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: var(--glow-pink);
+    }
+
+    .board-countdown span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .board-countdown strong {
+      font-size: 18px;
+    }
+
+    canvas {
+      width: calc(var(--cell) * 10);
+      height: calc(var(--cell) * 20);
+      max-width: 100%;
+      background: #0f172a;
+      border: 1px solid rgba(104, 172, 255, 0.78);
+      border-radius: 6px;
+      box-shadow: inset 0 0 28px rgba(22, 88, 190, 0.22), 0 0 18px rgba(0, 212, 255, 0.18);
+    }
+
+    .preview {
+      width: 112px;
+      height: 92px;
+      background: #0f172a;
+      border: 1px solid rgba(104, 172, 255, 0.78);
+      border-radius: 6px;
+    }
+
+    .mini-preview {
+      width: 78px;
+      height: 58px;
+      background: #0f172a;
+      border: 1px solid rgba(104, 172, 255, 0.78);
+      border-radius: 6px;
+      display: block;
+      margin: 0 auto 6px;
+    }
+
+    .side-panel {
+      padding: 12px;
+    }
+
+    .side-panel h3 {
+      margin: 8px 0 6px;
+      font-size: 15px;
+    }
+
+    .side-panel button {
+      min-height: 38px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .stat {
+      background: rgba(4, 10, 24, 0.82);
+      border: 1px solid rgba(101, 154, 255, 0.44);
+      border-radius: 6px;
+      padding: 7px 8px;
+      box-shadow: inset 0 0 14px rgba(0, 212, 255, 0.06);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 17px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.38);
+    }
+
+    .controls {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-top: 8px;
+    }
+
+    .inline-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 8px;
+    }
+
+    .mino-buttons {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-top: 6px;
+    }
+
+    .mino-buttons button {
+      display: grid;
+      place-items: center;
+      min-height: 48px;
+      padding: 4px;
+    }
+
+    .control-button {
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 3px;
+      min-height: 60px;
+      padding: 6px 4px;
+      border-radius: 999px;
+      font-size: 11px;
+    }
+
+    .control-button::before {
+      content: attr(data-icon);
+      color: #f8fbff;
+      font-size: 22px;
+    }
+
+    .control-button.primary,
+    .control-button.danger {
+      border-radius: 10px;
+    }
+
+    .mino-icon {
+      display: grid;
+      grid-template-columns: repeat(4, 12px);
+      grid-auto-rows: 12px;
+      gap: 2px;
+      justify-content: center;
+    }
+
+    .mino-icon-cell {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      background: transparent;
+    }
+
+    .message {
+      min-height: 20px;
+      color: #fde68a;
+      font-size: 13px;
+      font-weight: 700;
+      text-shadow: 0 0 12px rgba(255, 180, 32, 0.45);
+    }
+
+    .target-note {
+      color: var(--target);
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .rules, .history-list {
+      line-height: 1.75;
+    }
+
+    .history-item {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .result-board {
+      margin-top: 12px;
+      display: grid;
+      justify-content: center;
+    }
+
+    .home-screen {
+      min-height: calc(100svh - 54px);
+      display: none;
+      align-content: center;
+      padding: 18px 0;
+      background:
+        linear-gradient(90deg, rgba(255, 74, 24, 0.12), transparent 18% 82%, rgba(255, 74, 24, 0.12)),
+        radial-gradient(circle at 50% 78%, rgba(0, 212, 255, 0.2), transparent 34%);
+    }
+
+    .home-screen.active {
+      display: grid;
+    }
+
+    .brand-subtitle {
+      margin: 8px 0 28px;
+      color: #a7f3ff;
+      text-align: center;
+      font-size: 14px;
+      letter-spacing: 0.28em;
+      text-shadow: var(--glow-cyan);
+    }
+
+    @media (max-width: 760px) {
+      :root {
+        --cell: min(8.4vw, 26px, max(13px, calc(5svh - 6.8px)));
+      }
+
+      main {
+        padding-top: max(10px, env(safe-area-inset-top));
+      }
+
+      h2 {
+        margin-bottom: 8px;
+      }
+
+      .game-layout {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .side-panel {
+        width: 100%;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .side-panel {
+        padding: 10px;
+      }
+
+      .button-grid,
+      .controls,
+      .inline-actions,
+      .mino-buttons {
+        gap: 7px;
+      }
+
+      .controls {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .controls button {
+        padding-inline: 6px;
+      }
+
+      .mino-buttons button {
+        min-height: 44px;
+      }
+
+      .home-actions button {
+        min-height: 58px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="homeScreen" class="screen home-screen active">
+      <h1>居酒屋<br>ブロック</h1>
+      <p class="brand-subtitle">IZAKAYA BLOCKS</p>
+      <div class="card home-actions">
+        <button class="primary" id="newSetupButton" data-icon="⌁">
+          <span>初期盤面を作る<span class="button-sub">落ちものブロックで盤面を作成</span></span>
+        </button>
+        <button id="startSavedButton" data-icon="▣">
+          <span>保存済み盤面から始める<span class="button-sub">過去に保存した盤面で開始</span></span>
+        </button>
+        <button id="rulesButton" data-icon="?">
+          <span>ルールを見る<span class="button-sub">遊び方と勝利条件を確認</span></span>
+        </button>
+        <button id="historyButton" data-icon="↗">
+          <span>過去の結果を見る<span class="button-sub">プレイ履歴と記録を確認</span></span>
+        </button>
+      </div>
+    </section>
+
+    <section id="setupScreen" class="screen">
+      <h2>初期盤面作成</h2>
+      <div class="game-layout">
+        <div class="board-wrap">
+          <canvas id="setupBoard" width="300" height="600"></canvas>
+          <p class="target-note">ゲームオーバー時の盤面を自動保存します。</p>
+        </div>
+        <div class="card side-panel">
+          <div class="stats">
+            <div class="stat"><span>スコア</span><strong id="setupScore">0</strong></div>
+            <div class="stat"><span>消去ライン数</span><strong id="setupLines">0</strong></div>
+          </div>
+          <h3>次のブロック</h3>
+          <canvas class="preview" id="setupNext" width="112" height="92"></canvas>
+          <p class="message" id="setupMessage"></p>
+          <div class="controls">
+            <button class="control-button" id="setupLeft" data-icon="←">左移動</button>
+            <button class="control-button" id="setupRight" data-icon="→">右移動</button>
+            <button class="control-button" id="setupRotate" data-icon="↻">回転</button>
+            <button class="control-button" id="setupDrop" data-icon="↓">高速落下</button>
+          </div>
+          <div class="inline-actions">
+            <button id="setupPause">一時停止</button>
+            <button id="setupRestart">もう一度作る</button>
+            <button class="primary" id="setupStartIzakaya" disabled>本編を開始</button>
+            <button id="setupHome">ホーム</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="izakayaScreen" class="screen">
+      <h2>居酒屋ブロック本編</h2>
+      <div class="game-layout">
+        <div class="board-wrap">
+          <div class="board-countdown" id="boardCountdown"><span>残り</span><strong>-</strong></div>
+          <div class="board-stage">
+            <canvas id="izakayaBoard" width="300" height="600"></canvas>
+          </div>
+          <p class="target-note">黄色の線が、初期盤面の一番下の攻略対象ラインです。</p>
+        </div>
+        <div class="card side-panel">
+          <div class="stats">
+            <div class="stat"><span>現在のブロック</span><strong id="currentPiece">なし</strong></div>
+            <div class="stat"><span>食べた品数</span><strong id="mealCount">0</strong></div>
+            <div class="stat"><span>配置ブロック数</span><strong id="placedCount">0</strong></div>
+            <div class="stat"><span>除外済み</span><strong id="excludedList">なし</strong></div>
+            <div class="stat"><span>消去ライン数</span><strong id="izakayaLines">0</strong></div>
+          </div>
+          <canvas class="mini-preview" id="izakayaCurrentPreview" width="88" height="68"></canvas>
+          <p class="message" id="izakayaMessage"></p>
+          <div class="button-grid">
+            <button class="ok" id="mealButton">1品完食</button>
+            <button class="primary" id="drawPieceButton" disabled>ブロックを抽選</button>
+          </div>
+          <h3>ブロックを除外する</h3>
+          <div class="mino-buttons" id="excludeButtons"></div>
+          <div class="controls">
+            <button class="control-button" id="izakayaLeft" data-icon="←" disabled>左移動</button>
+            <button class="control-button" id="izakayaRight" data-icon="→" disabled>右移動</button>
+            <button class="control-button" id="izakayaRotate" data-icon="↻" disabled>回転</button>
+            <button class="control-button primary" id="confirmPiece" data-icon="✓" disabled>配置確定</button>
+          </div>
+          <div class="inline-actions">
+            <button class="danger" id="giveUpButton">ギブアップ</button>
+            <button id="izakayaHome">ホーム</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen">
+      <h2 id="resultTitle">結果</h2>
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><span>完食数</span><strong id="resultMeals">0</strong></div>
+          <div class="stat"><span>配置ブロック数</span><strong id="resultPlaced">0</strong></div>
+          <div class="stat"><span>除外ブロック数</span><strong id="resultExcluded">0</strong></div>
+          <div class="stat"><span>消去ライン数</span><strong id="resultLines">0</strong></div>
+          <div class="stat"><span>プレイ時間</span><strong id="resultTime">0秒</strong></div>
+        </div>
+        <div class="result-board">
+          <canvas id="resultBoard" width="300" height="600"></canvas>
+        </div>
+        <div class="inline-actions">
+          <button class="primary" id="resultRetry">保存盤面でもう一度</button>
+          <button id="resultHome">ホーム</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="rulesScreen" class="screen">
+      <h2>ルール</h2>
+      <div class="card rules">
+        <p>落ちものブロックでゲームオーバーになった盤面を、本編の初期盤面として保存します。</p>
+        <ol>
+          <li>本編では料理を1品完食するたびに「ブロックを抽選」か「ブロックを除外する」を選びます。</li>
+          <li>ブロックを抽選すると5秒以内に横移動と回転ができます。</li>
+          <li>5秒経過、または配置確定で、その位置から自動落下します。</li>
+          <li>初期盤面の一番下の段をライン消去できたらクリアです。</li>
+          <li>除外できるブロックは最大3種類です。</li>
+        </ol>
+        <button id="rulesHome">ホーム</button>
+      </div>
+    </section>
+
+    <section id="historyScreen" class="screen">
+      <h2>過去の結果</h2>
+      <div class="card">
+        <div class="history-list" id="historyList"></div>
+        <button id="historyHome">ホーム</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const WIDTH = 10;
+    const HEIGHT = 20;
+    const IZAKAYA_EXTRA_ROWS = 4;
+    const CELL = 30;
+    const SETUP_TICK_MS = 520;
+    const COUNTDOWN_SECONDS = 5;
+    const STORAGE_BOARD = "izakayaBlocks.savedBoard";
+    const STORAGE_RESULTS = "izakayaBlocks.results";
+    const LEGACY_STORAGE_BOARD = "izakaya" + "T" + "etris.savedBoard";
+    const LEGACY_STORAGE_RESULTS = "izakaya" + "T" + "etris.results";
+    const TYPES = ["I", "O", "T", "S", "Z", "J", "L"];
+    const COLORS = {
+      I: "#00d4ff",
+      O: "#ffd21f",
+      T: "#d84dff",
+      S: "#6cff2d",
+      Z: "#ff3848",
+      J: "#1976ff",
+      L: "#ff9d13"
+    };
+    const SHAPES = {
+      I: [[1, 1, 1, 1]],
+      O: [[1, 1], [1, 1]],
+      T: [[0, 1, 0], [1, 1, 1]],
+      S: [[0, 1, 1], [1, 1, 0]],
+      Z: [[1, 1, 0], [0, 1, 1]],
+      J: [[1, 0, 0], [1, 1, 1]],
+      L: [[0, 0, 1], [1, 1, 1]]
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const setupCanvas = $("setupBoard");
+    const setupCtx = setupCanvas.getContext("2d");
+    const setupNextCtx = $("setupNext").getContext("2d");
+    const izakayaCanvas = $("izakayaBoard");
+    const izakayaCtx = izakayaCanvas.getContext("2d");
+    const izakayaCurrentPreviewCtx = $("izakayaCurrentPreview").getContext("2d");
+    const resultCtx = $("resultBoard").getContext("2d");
+
+    let setup = {};
+    let izakaya = {};
+
+    function emptyBoard(height = HEIGHT) {
+      return Array.from({ length: height }, () => Array(WIDTH).fill(null));
+    }
+
+    function emptyMask(height = HEIGHT) {
+      return Array.from({ length: height }, () => Array(WIDTH).fill(false));
+    }
+
+    function cloneBoard(board) {
+      return board.map(row => row.map(cell => cell ? { type: cell.type } : null));
+    }
+
+    function cloneMask(mask) {
+      return mask.map(row => row.slice());
+    }
+
+    function addTopRows(rows, count, fillValue) {
+      const topRows = Array.from({ length: count }, () => Array(WIDTH).fill(fillValue));
+      return topRows.concat(rows);
+    }
+
+    function expandSavedForIzakaya(saved) {
+      return {
+        board: addTopRows(cloneBoard(saved.board), IZAKAYA_EXTRA_ROWS, null),
+        targetMask: addTopRows(cloneMask(saved.targetMask), IZAKAYA_EXTRA_ROWS, false)
+      };
+    }
+
+    function randomType() {
+      return TYPES[Math.floor(Math.random() * TYPES.length)];
+    }
+
+    function rotate(shape) {
+      return shape[0].map((_, x) => shape.map(row => row[x]).reverse());
+    }
+
+    function createPiece(type = randomType(), startY = 0) {
+      const shape = SHAPES[type].map(row => row.slice());
+      return {
+        type,
+        shape,
+        x: Math.floor((WIDTH - shape[0].length) / 2),
+        y: startY
+      };
+    }
+
+    function createEntryPiece(type = randomType()) {
+      const shape = SHAPES[type];
+      return createPiece(type, -shape.length);
+    }
+
+    function canPlace(board, piece, dx = 0, dy = 0, shape = piece.shape) {
+      const boardHeight = board.length;
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+          if (!shape[y][x]) continue;
+          const boardX = piece.x + x + dx;
+          const boardY = piece.y + y + dy;
+          if (boardX < 0 || boardX >= WIDTH || boardY >= boardHeight) return false;
+          if (boardY >= 0 && board[boardY][boardX]) return false;
+        }
+      }
+      return true;
+    }
+
+    function mergePiece(board, piece) {
+      const boardHeight = board.length;
+      piece.shape.forEach((row, y) => {
+        row.forEach((filled, x) => {
+          if (!filled) return;
+          const boardY = piece.y + y;
+          const boardX = piece.x + x;
+          if (boardY >= 0 && boardY < boardHeight) {
+            board[boardY][boardX] = { type: piece.type };
+          }
+        });
+      });
+    }
+
+    function clearLines(board, targetMask = null) {
+      let count = 0;
+      let targetCleared = false;
+      for (let y = board.length - 1; y >= 0; y--) {
+        if (!board[y].every(Boolean)) continue;
+        if (targetMask && targetMask[y].some(Boolean)) targetCleared = true;
+        board.splice(y, 1);
+        board.unshift(Array(WIDTH).fill(null));
+        if (targetMask) {
+          targetMask.splice(y, 1);
+          targetMask.unshift(Array(WIDTH).fill(false));
+        }
+        count++;
+        y++;
+      }
+      return { count, targetCleared };
+    }
+
+    function drawBoard(ctx, board, activePiece = null, targetMask = null) {
+      const boardHeight = board.length;
+      ctx.canvas.height = boardHeight * CELL;
+      ctx.canvas.style.height = `calc(var(--cell) * ${boardHeight})`;
+      ctx.clearRect(0, 0, WIDTH * CELL, boardHeight * CELL);
+      ctx.fillStyle = "#040a18";
+      ctx.fillRect(0, 0, WIDTH * CELL, boardHeight * CELL);
+
+      if (targetMask) {
+        ctx.fillStyle = "rgba(255, 210, 31, 0.14)";
+        for (let y = 0; y < boardHeight; y++) {
+          if (targetMask[y].some(Boolean)) {
+            ctx.fillRect(0, y * CELL, WIDTH * CELL, CELL);
+          }
+        }
+      }
+
+      for (let y = 0; y < boardHeight; y++) {
+        for (let x = 0; x < WIDTH; x++) {
+          if (board[y][x]) drawCell(ctx, x, y, board[y][x].type);
+          ctx.strokeStyle = "rgba(67, 125, 214, 0.22)";
+          ctx.strokeRect(x * CELL, y * CELL, CELL, CELL);
+        }
+      }
+
+      if (activePiece) drawActivePiece(ctx, activePiece, boardHeight);
+    }
+
+    function drawActivePiece(ctx, piece, boardHeight) {
+      const displayY = piece.y < 0 ? 0 : piece.y;
+      ctx.save();
+      if (piece.y < 0) ctx.globalAlpha = 0.82;
+      piece.shape.forEach((row, y) => {
+        row.forEach((filled, x) => {
+          if (!filled) return;
+          const boardY = displayY + y;
+          if (boardY >= 0 && boardY < boardHeight) {
+            drawCell(ctx, piece.x + x, boardY, piece.type);
+          }
+        });
+      });
+      ctx.restore();
+    }
+
+    function drawCell(ctx, x, y, type) {
+      const color = COLORS[type] || "#94a3b8";
+      const left = x * CELL + 1;
+      const top = y * CELL + 1;
+      const size = CELL - 2;
+      ctx.save();
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = color;
+      ctx.fillRect(left, top, size, size);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
+      ctx.fillRect(left + 3, top + 3, Math.max(4, size - 6), 4);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.strokeRect(left + 0.5, top + 0.5, size - 1, size - 1);
+      ctx.restore();
+    }
+
+    function drawPreview(ctx, type) {
+      ctx.clearRect(0, 0, 112, 92);
+      ctx.fillStyle = "#040a18";
+      ctx.fillRect(0, 0, 112, 92);
+      if (!type) return;
+      const shape = SHAPES[type];
+      const size = 20;
+      const offsetX = Math.floor((112 - shape[0].length * size) / 2);
+      const offsetY = Math.floor((92 - shape.length * size) / 2);
+      shape.forEach((row, y) => {
+        row.forEach((filled, x) => {
+          if (!filled) return;
+          ctx.save();
+          ctx.shadowColor = COLORS[type];
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = COLORS[type];
+          ctx.fillRect(offsetX + x * size + 1, offsetY + y * size + 1, size - 2, size - 2);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "rgba(255, 255, 255, 0.24)";
+          ctx.fillRect(offsetX + x * size + 3, offsetY + y * size + 3, size - 6, 3);
+          ctx.restore();
+        });
+      });
+    }
+
+    function drawMiniPreview(ctx, type) {
+      ctx.clearRect(0, 0, 88, 68);
+      ctx.fillStyle = "#040a18";
+      ctx.fillRect(0, 0, 88, 68);
+      if (!type) return;
+      drawShape(ctx, type, 14, 88, 68);
+    }
+
+    function drawShape(ctx, type, size, width, height) {
+      const shape = SHAPES[type];
+      const offsetX = Math.floor((width - shape[0].length * size) / 2);
+      const offsetY = Math.floor((height - shape.length * size) / 2);
+      shape.forEach((row, y) => {
+        row.forEach((filled, x) => {
+          if (!filled) return;
+          ctx.save();
+          ctx.shadowColor = COLORS[type];
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = COLORS[type];
+          ctx.fillRect(offsetX + x * size + 1, offsetY + y * size + 1, size - 2, size - 2);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "rgba(255, 255, 255, 0.24)";
+          ctx.fillRect(offsetX + x * size + 3, offsetY + y * size + 3, size - 6, 3);
+          ctx.restore();
+        });
+      });
+    }
+
+    function createMinoIcon(type) {
+      const icon = document.createElement("span");
+      icon.className = "mino-icon";
+      const shape = SHAPES[type];
+      const offsetX = Math.floor((4 - shape[0].length) / 2);
+      const offsetY = Math.floor((4 - shape.length) / 2);
+      for (let y = 0; y < 4; y++) {
+        for (let x = 0; x < 4; x++) {
+          const cell = document.createElement("span");
+          cell.className = "mino-icon-cell";
+          if (shape[y - offsetY]?.[x - offsetX]) {
+            cell.style.background = COLORS[type];
+            cell.style.boxShadow = `inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 0 8px ${COLORS[type]}`;
+          }
+          icon.appendChild(cell);
+        }
+      }
+      return icon;
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach(screen => screen.classList.remove("active"));
+      $(id).classList.add("active");
+    }
+
+    function goHome() {
+      clearInterval(setup.timer);
+      clearInterval(izakaya.countdownTimer);
+      showScreen("homeScreen");
+    }
+
+    function saveSetupBoard() {
+      const targetMask = emptyMask();
+      targetMask[HEIGHT - 1] = Array(WIDTH).fill(true);
+      const payload = {
+        board: cloneBoard(setup.board),
+        targetMask,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(STORAGE_BOARD, JSON.stringify(payload));
+      $("setupStartIzakaya").disabled = false;
+    }
+
+    function loadSavedBoard() {
+      const raw = localStorage.getItem(STORAGE_BOARD) || localStorage.getItem(LEGACY_STORAGE_BOARD);
+      if (!raw) return null;
+      try {
+        const parsed = JSON.parse(raw);
+        if (!parsed.board || !parsed.targetMask) return null;
+        return parsed;
+      } catch {
+        return null;
+      }
+    }
+
+    function startSetup() {
+      clearInterval(setup.timer);
+      setup = {
+        board: emptyBoard(),
+        current: createPiece(),
+        next: randomType(),
+        score: 0,
+        lines: 0,
+        paused: false,
+        over: false,
+        timer: null
+      };
+      $("setupMessage").textContent = "";
+      $("setupStartIzakaya").disabled = !loadSavedBoard();
+      setup.timer = setInterval(setupTick, SETUP_TICK_MS);
+      updateSetupView();
+      showScreen("setupScreen");
+    }
+
+    function setupTick() {
+      if (setup.paused || setup.over) return;
+      if (canPlace(setup.board, setup.current, 0, 1)) {
+        setup.current.y++;
+      } else {
+        lockSetupPiece();
+      }
+      updateSetupView();
+    }
+
+    function lockSetupPiece() {
+      mergePiece(setup.board, setup.current);
+      const cleared = clearLines(setup.board).count;
+      setup.lines += cleared;
+      setup.score += cleared * cleared * 100;
+      setup.current = createPiece(setup.next);
+      setup.next = randomType();
+      if (!canPlace(setup.board, setup.current)) {
+        setup.over = true;
+        clearInterval(setup.timer);
+        saveSetupBoard();
+        $("setupMessage").textContent = "ゲームオーバー。盤面を保存しました。";
+      }
+    }
+
+    function moveSetup(dx) {
+      if (setup.paused || setup.over) return;
+      if (canPlace(setup.board, setup.current, dx, 0)) setup.current.x += dx;
+      updateSetupView();
+    }
+
+    function rotateSetup() {
+      if (setup.paused || setup.over) return;
+      const rotated = rotate(setup.current.shape);
+      for (const offset of [0, -1, 1, -2, 2]) {
+        if (canPlace(setup.board, setup.current, offset, 0, rotated)) {
+          setup.current.x += offset;
+          setup.current.shape = rotated;
+          break;
+        }
+      }
+      updateSetupView();
+    }
+
+    function hardDropSetup() {
+      if (setup.paused || setup.over) return;
+      while (canPlace(setup.board, setup.current, 0, 1)) setup.current.y++;
+      lockSetupPiece();
+      updateSetupView();
+    }
+
+    function updateSetupView() {
+      drawBoard(setupCtx, setup.board, setup.current);
+      drawPreview(setupNextCtx, setup.next);
+      $("setupScore").textContent = setup.score;
+      $("setupLines").textContent = setup.lines;
+      $("setupPause").textContent = setup.paused ? "再開" : "一時停止";
+    }
+
+    function startIzakayaFromSaved() {
+      const saved = loadSavedBoard();
+      if (!saved) {
+        alert("保存済み盤面がありません。先に初期盤面を作ってください。");
+        return;
+      }
+      clearInterval(setup.timer);
+      clearInterval(izakaya.countdownTimer);
+      const expanded = expandSavedForIzakaya(saved);
+      izakaya = {
+        board: expanded.board,
+        targetMask: expanded.targetMask,
+        current: null,
+        countdownLeft: null,
+        meals: 0,
+        placed: 0,
+        excluded: [],
+        lines: 0,
+        canChoose: false,
+        active: false,
+        startedAt: Date.now(),
+        countdownTimer: null
+      };
+      $("izakayaMessage").textContent = "1品完食したら、ブロックを抽選するか除外してください。";
+      updateIzakayaView();
+      showScreen("izakayaScreen");
+    }
+
+    function mealFinished() {
+      if (izakaya.active) return;
+      izakaya.meals++;
+      izakaya.canChoose = true;
+      $("izakayaMessage").textContent = "ブロックを抽選する、またはブロックを除外できます。";
+      updateIzakayaView();
+    }
+
+    function drawIzakayaPiece() {
+      if (!izakaya.canChoose || izakaya.active) return;
+      const pool = TYPES.filter(type => !izakaya.excluded.includes(type));
+      if (!pool.length) {
+        finishIzakaya(false, "抽選できるブロックがありません。");
+        return;
+      }
+      const type = pool[Math.floor(Math.random() * pool.length)];
+      izakaya.current = createPiece(type, 0);
+      izakaya.canChoose = false;
+      izakaya.active = true;
+      izakaya.countdownLeft = COUNTDOWN_SECONDS;
+      $("izakayaMessage").textContent = `${type} ブロックを抽選しました。上部の表示を見ながら5秒以内に調整してください。`;
+      clearInterval(izakaya.countdownTimer);
+      izakaya.countdownTimer = setInterval(() => {
+        izakaya.countdownLeft--;
+        if (izakaya.countdownLeft <= 0) confirmIzakayaPiece();
+        updateIzakayaView();
+      }, 1000);
+      updateIzakayaView();
+    }
+
+    function excludeType(type) {
+      if (!izakaya.canChoose || izakaya.active) return;
+      if (izakaya.excluded.includes(type)) return;
+      if (izakaya.excluded.length >= 3) {
+        $("izakayaMessage").textContent = "除外できるブロックは最大3種類です。";
+        return;
+      }
+      izakaya.excluded.push(type);
+      izakaya.canChoose = false;
+      $("izakayaMessage").textContent = `${type} ブロックを除外しました。次の料理を完食してください。`;
+      updateIzakayaView();
+    }
+
+    function moveIzakaya(dx) {
+      if (!izakaya.active || !izakaya.current) return;
+      if (canPlace(izakaya.board, izakaya.current, dx, 0)) izakaya.current.x += dx;
+      updateIzakayaView();
+    }
+
+    function rotateIzakaya() {
+      if (!izakaya.active || !izakaya.current) return;
+      const rotated = rotate(izakaya.current.shape);
+      for (const offset of [0, -1, 1, -2, 2]) {
+        if (canPlace(izakaya.board, izakaya.current, offset, 0, rotated)) {
+          izakaya.current.x += offset;
+          izakaya.current.shape = rotated;
+          if (izakaya.current.y < 0) izakaya.current.y = -rotated.length;
+          break;
+        }
+      }
+      updateIzakayaView();
+    }
+
+    function confirmIzakayaPiece() {
+      if (!izakaya.active || !izakaya.current) return;
+      clearInterval(izakaya.countdownTimer);
+      izakaya.current.y = -izakaya.current.shape.length;
+      while (canPlace(izakaya.board, izakaya.current, 0, 1)) izakaya.current.y++;
+      if (izakaya.current.y < 0) {
+        finishIzakaya(false, "ブロックが盤面に入れませんでした。");
+        return;
+      }
+      mergePiece(izakaya.board, izakaya.current);
+      izakaya.placed++;
+      const cleared = clearLines(izakaya.board, izakaya.targetMask);
+      izakaya.lines += cleared.count;
+      izakaya.current = null;
+      izakaya.active = false;
+      izakaya.countdownLeft = null;
+      if (cleared.targetCleared) {
+        finishIzakaya(true, "攻略対象ラインを消去しました！");
+        return;
+      }
+      $("izakayaMessage").textContent = cleared.count
+        ? `${cleared.count}ライン消去。次の料理を完食してください。`
+        : "配置完了。次の料理を完食してください。";
+      updateIzakayaView();
+    }
+
+    function finishIzakaya(clear, message) {
+      clearInterval(izakaya.countdownTimer);
+      const result = {
+        clear,
+        message,
+        meals: izakaya.meals,
+        placed: izakaya.placed,
+        excluded: izakaya.excluded.length,
+        lines: izakaya.lines,
+        seconds: Math.floor((Date.now() - izakaya.startedAt) / 1000),
+        board: cloneBoard(izakaya.board),
+        targetMask: cloneMask(izakaya.targetMask),
+        endedAt: new Date().toISOString()
+      };
+      saveResult(result);
+      showResult(result);
+    }
+
+    function saveResult(result) {
+      const results = JSON.parse(localStorage.getItem(STORAGE_RESULTS) || localStorage.getItem(LEGACY_STORAGE_RESULTS) || "[]");
+      results.unshift(result);
+      localStorage.setItem(STORAGE_RESULTS, JSON.stringify(results.slice(0, 20)));
+    }
+
+    function showResult(result) {
+      $("resultTitle").textContent = result.clear ? "クリア！" : "ゲームオーバー";
+      $("resultMeals").textContent = result.meals;
+      $("resultPlaced").textContent = result.placed;
+      $("resultExcluded").textContent = result.excluded;
+      $("resultLines").textContent = result.lines;
+      $("resultTime").textContent = `${result.seconds}秒`;
+      drawBoard(resultCtx, result.board, null, result.targetMask);
+      showScreen("resultScreen");
+    }
+
+    function updateIzakayaView() {
+      drawBoard(izakayaCtx, izakaya.board, izakaya.current, izakaya.targetMask);
+      $("currentPiece").textContent = izakaya.current ? izakaya.current.type : "なし";
+      drawMiniPreview(izakayaCurrentPreviewCtx, izakaya.current?.type || null);
+      const countdownText = izakaya.countdownLeft ?? "-";
+      $("boardCountdown").querySelector("strong").textContent = countdownText;
+      $("mealCount").textContent = izakaya.meals;
+      $("placedCount").textContent = izakaya.placed;
+      $("excludedList").textContent = izakaya.excluded.length ? izakaya.excluded.join(", ") : "なし";
+      $("izakayaLines").textContent = izakaya.lines;
+      $("mealButton").disabled = izakaya.active || izakaya.canChoose;
+      $("drawPieceButton").disabled = !izakaya.canChoose || izakaya.active;
+      $("izakayaLeft").disabled = !izakaya.active;
+      $("izakayaRight").disabled = !izakaya.active;
+      $("izakayaRotate").disabled = !izakaya.active;
+      $("confirmPiece").disabled = !izakaya.active;
+      renderExcludeButtons();
+    }
+
+    function renderExcludeButtons() {
+      const wrap = $("excludeButtons");
+      wrap.innerHTML = "";
+      TYPES.forEach(type => {
+        const button = document.createElement("button");
+        button.title = `${type}ブロックを除外`;
+        button.setAttribute("aria-label", `${type}ブロックを除外`);
+        button.appendChild(createMinoIcon(type));
+        button.disabled = !izakaya.canChoose || izakaya.active || izakaya.excluded.includes(type) || izakaya.excluded.length >= 3;
+        button.style.background = izakaya.excluded.includes(type) ? "#475569" : "#0f172a";
+        button.style.boxShadow = izakaya.excluded.includes(type) ? "none" : `inset 0 0 0 2px ${COLORS[type]}`;
+        button.addEventListener("click", () => excludeType(type));
+        wrap.appendChild(button);
+      });
+    }
+
+    function showHistory() {
+      const results = JSON.parse(localStorage.getItem(STORAGE_RESULTS) || localStorage.getItem(LEGACY_STORAGE_RESULTS) || "[]");
+      const list = $("historyList");
+      list.innerHTML = "";
+      if (!results.length) {
+        list.textContent = "過去の結果はまだありません。";
+      } else {
+        results.forEach(result => {
+          const item = document.createElement("div");
+          item.className = "history-item";
+          const date = new Date(result.endedAt).toLocaleString("ja-JP");
+          item.textContent = `${date} / ${result.clear ? "クリア" : "ゲームオーバー"} / 完食${result.meals} / 配置${result.placed} / ${result.seconds}秒`;
+          list.appendChild(item);
+        });
+      }
+      showScreen("historyScreen");
+    }
+
+    function bindEvents() {
+      $("newSetupButton").addEventListener("click", startSetup);
+      $("startSavedButton").addEventListener("click", startIzakayaFromSaved);
+      $("rulesButton").addEventListener("click", () => showScreen("rulesScreen"));
+      $("historyButton").addEventListener("click", showHistory);
+      $("rulesHome").addEventListener("click", () => showScreen("homeScreen"));
+      $("historyHome").addEventListener("click", () => showScreen("homeScreen"));
+      $("setupHome").addEventListener("click", goHome);
+      $("izakayaHome").addEventListener("click", goHome);
+      $("resultHome").addEventListener("click", goHome);
+      $("setupLeft").addEventListener("click", () => moveSetup(-1));
+      $("setupRight").addEventListener("click", () => moveSetup(1));
+      $("setupRotate").addEventListener("click", rotateSetup);
+      $("setupDrop").addEventListener("click", hardDropSetup);
+      $("setupPause").addEventListener("click", () => {
+        setup.paused = !setup.paused;
+        $("setupMessage").textContent = setup.paused ? "一時停止中です。" : "";
+        updateSetupView();
+      });
+      $("setupRestart").addEventListener("click", startSetup);
+      $("setupStartIzakaya").addEventListener("click", startIzakayaFromSaved);
+      $("mealButton").addEventListener("click", mealFinished);
+      $("drawPieceButton").addEventListener("click", drawIzakayaPiece);
+      $("izakayaLeft").addEventListener("click", () => moveIzakaya(-1));
+      $("izakayaRight").addEventListener("click", () => moveIzakaya(1));
+      $("izakayaRotate").addEventListener("click", rotateIzakaya);
+      $("confirmPiece").addEventListener("click", confirmIzakayaPiece);
+      $("giveUpButton").addEventListener("click", () => finishIzakaya(false, "ギブアップしました。"));
+      $("resultRetry").addEventListener("click", startIzakayaFromSaved);
+      document.addEventListener("keydown", handleKey);
+    }
+
+    function handleKey(event) {
+      const activeId = document.querySelector(".screen.active")?.id;
+      if (activeId === "setupScreen") {
+        if (event.key === "ArrowLeft") moveSetup(-1);
+        if (event.key === "ArrowRight") moveSetup(1);
+        if (event.key === "ArrowUp") rotateSetup();
+        if (event.key === " " || event.key === "ArrowDown") hardDropSetup();
+      }
+      if (activeId === "izakayaScreen") {
+        if (event.key === "ArrowLeft") moveIzakaya(-1);
+        if (event.key === "ArrowRight") moveIzakaya(1);
+        if (event.key === "ArrowUp") rotateIzakaya();
+        if (event.key === " " || event.key === "Enter") confirmIzakayaPiece();
+      }
+    }
+
+    bindEvents();
+  </script>
+</body>
+</html>
