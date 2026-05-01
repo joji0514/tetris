@@ -121,25 +121,6 @@
       box-shadow: var(--glow-pink);
     }
 
-    .screen-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-
-    .screen-header h2 {
-      margin: 0;
-    }
-
-    .compact-home {
-      min-height: 34px;
-      padding: 6px 10px;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
     button, select {
       border: 1px solid rgba(83, 174, 255, 0.72);
       border-radius: 10px;
@@ -278,11 +259,11 @@
     .play-rail,
     .setup-side-control {
       display: grid;
-      grid-template-rows: 1fr auto auto;
+      grid-template-rows: repeat(6, minmax(0, auto));
       gap: 8px;
-      align-content: stretch;
+      align-content: center;
       align-self: stretch;
-      padding-bottom: 6px;
+      padding-block: 4px 6px;
     }
 
     .play-rail .control-button,
@@ -292,11 +273,20 @@
     }
 
     .rail-top {
-      grid-row: 2;
+      grid-row: 3;
     }
 
     .rail-bottom {
-      grid-row: 3;
+      grid-row: 4;
+    }
+
+    .rail-button {
+      width: 72px;
+      min-height: 42px;
+      padding: 6px 5px;
+      border-radius: 10px;
+      font-size: 11px;
+      line-height: 1.15;
     }
 
     .board-wrap {
@@ -376,13 +366,22 @@
       display: none;
     }
 
-    .setup-actions {
-      grid-template-columns: 1fr;
-    }
-
     .safe-home-button {
       border-color: rgba(255, 255, 255, 0.34);
       background: linear-gradient(180deg, rgba(18, 26, 48, 0.96), rgba(5, 10, 24, 0.96));
+    }
+
+    .rail-exclude {
+      display: grid;
+      gap: 4px;
+      grid-row: 5 / span 2;
+    }
+
+    .rail-exclude-title {
+      margin: 0;
+      color: var(--muted);
+      font-size: 10px;
+      text-align: center;
     }
 
     .side-panel h3 {
@@ -563,16 +562,6 @@
         line-height: 1.15;
       }
 
-      body.game-locked .screen-header {
-        margin-bottom: 5px;
-      }
-
-      body.game-locked .compact-home {
-        min-height: 28px;
-        padding: 4px 8px;
-        font-size: 11px;
-      }
-
       .game-layout {
         grid-template-columns: 1fr;
         gap: 10px;
@@ -587,11 +576,11 @@
       }
 
       #setupScreen {
-        --cell: max(13px, min(calc(10vw - 12.8px), calc(5svh - 5.9px), 25px));
+        --cell: max(12px, min(calc(10vw - 15.2px), calc(5svh - 4.3px), 25px));
       }
 
       #setupScreen .setup-layout {
-        height: calc(100% - 33px);
+        height: 100%;
         display: grid;
         grid-template-columns: 1fr;
         align-content: start;
@@ -600,7 +589,7 @@
 
       #setupScreen .setup-playfield,
       #izakayaScreen .playfield-with-rails {
-        grid-template-columns: 52px minmax(0, auto) 52px;
+        grid-template-columns: 64px minmax(0, auto) 64px;
         gap: 4px;
       }
 
@@ -612,8 +601,8 @@
 
       #setupScreen .setup-side-control .control-button,
       #izakayaScreen .play-rail .control-button {
-        width: 52px;
-        min-height: 58px;
+        width: 64px;
+        min-height: 50px;
         padding: 4px 2px;
         border-radius: 999px;
         font-size: 10px;
@@ -666,18 +655,47 @@
       }
 
       #setupScreen .setup-actions {
-        grid-column: 1 / -1;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 5px;
-        margin-top: 0;
+        display: none;
       }
 
-      #setupScreen .setup-actions button {
-        min-height: 30px;
-        padding: 4px 5px;
-        font-size: 11px;
-        border-radius: 7px;
+      #setupScreen .setup-panel,
+      #izakayaScreen .side-panel {
+        display: none;
+      }
+
+      .rail-button {
+        width: 64px;
+        min-height: 34px;
+        padding: 4px 3px;
+        font-size: 10px;
+      }
+
+      .rail-exclude {
+        gap: 3px;
+      }
+
+      .rail-exclude .mino-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 3px;
+        margin: 0;
+      }
+
+      .rail-exclude .mino-buttons button {
+        min-height: 28px;
+        padding: 2px;
+      }
+
+      .rail-exclude .mino-icon {
+        grid-template-columns: repeat(4, 7px);
+        grid-auto-rows: 7px;
+        gap: 1px;
+      }
+
+      .rail-exclude .mino-icon-cell {
+        width: 7px;
+        height: 7px;
+        border-radius: 2px;
       }
 
       .side-panel {
@@ -739,13 +757,12 @@
     </section>
 
     <section id="setupScreen" class="screen">
-      <div class="screen-header">
-        <h2>初期盤面作成</h2>
-        <button class="safe-home-button compact-home" id="setupHome">ホーム</button>
-      </div>
+      <h2>初期盤面作成</h2>
       <div class="game-layout setup-layout">
         <div class="setup-playfield">
           <div class="setup-side-control setup-left-rail play-rail">
+            <button class="safe-home-button rail-button" id="setupHome">ホーム</button>
+            <button class="rail-button" id="setupPause">一時停止</button>
             <button class="control-button rail-top" id="setupRotate" data-icon="↻">回転</button>
             <button class="control-button rail-bottom" id="setupLeft" data-icon="←">左移動</button>
           </div>
@@ -754,6 +771,8 @@
             <p class="target-note">ゲームオーバー時の盤面を自動保存します。</p>
           </div>
           <div class="setup-side-control setup-right-rail play-rail">
+            <button class="primary rail-button" id="setupStartIzakaya" disabled>本編開始</button>
+            <button class="rail-button" id="setupRestart">再作成</button>
             <button class="control-button primary rail-top" id="setupDrop" data-icon="✓">配置</button>
             <button class="control-button rail-bottom" id="setupRight" data-icon="→">右移動</button>
           </div>
@@ -766,23 +785,17 @@
           <h3>次のブロック</h3>
           <canvas class="preview" id="setupNext" width="112" height="92"></canvas>
           <p class="message" id="setupMessage"></p>
-          <div class="inline-actions setup-actions">
-            <button id="setupPause">一時停止</button>
-            <button id="setupRestart">もう一度作る</button>
-            <button class="primary" id="setupStartIzakaya" disabled>本編を開始</button>
-          </div>
         </div>
       </div>
     </section>
 
     <section id="izakayaScreen" class="screen">
-      <div class="screen-header">
-        <h2>居酒屋ブロック本編</h2>
-        <button class="safe-home-button compact-home" id="izakayaHome">ホーム</button>
-      </div>
+      <h2>居酒屋ブロック本編</h2>
       <div class="game-layout">
         <div class="playfield-with-rails izakaya-playfield">
           <div class="play-rail left-rail">
+            <button class="safe-home-button rail-button" id="izakayaHome">ホーム</button>
+            <button class="ok rail-button" id="mealButton">1品完食</button>
             <button class="control-button rail-top" id="izakayaRotate" data-icon="↻" disabled>回転</button>
             <button class="control-button rail-bottom" id="izakayaLeft" data-icon="←" disabled>左移動</button>
           </div>
@@ -794,8 +807,14 @@
             <p class="target-note">黄色の線が、初期盤面の一番下の攻略対象ラインです。</p>
           </div>
           <div class="play-rail right-rail">
+            <button class="primary rail-button" id="drawPieceButton" disabled>抽選</button>
+            <button class="danger rail-button" id="giveUpButton">ギブアップ</button>
             <button class="control-button primary rail-top" id="confirmPiece" data-icon="✓" disabled>配置確定</button>
             <button class="control-button rail-bottom" id="izakayaRight" data-icon="→" disabled>右移動</button>
+            <div class="rail-exclude">
+              <p class="rail-exclude-title">除外</p>
+              <div class="mino-buttons" id="excludeButtons"></div>
+            </div>
           </div>
         </div>
         <div class="card side-panel">
@@ -808,15 +827,6 @@
           </div>
           <canvas class="mini-preview" id="izakayaCurrentPreview" width="88" height="68"></canvas>
           <p class="message" id="izakayaMessage"></p>
-          <div class="button-grid">
-            <button class="ok" id="mealButton">1品完食</button>
-            <button class="primary" id="drawPieceButton" disabled>ブロックを抽選</button>
-          </div>
-          <h3>ブロックを除外する</h3>
-          <div class="mino-buttons" id="excludeButtons"></div>
-          <div class="inline-actions">
-            <button class="danger" id="giveUpButton">ギブアップ</button>
-          </div>
         </div>
       </div>
     </section>
