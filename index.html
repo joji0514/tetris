@@ -602,7 +602,7 @@
 
       #setupScreen .setup-side-control,
       #izakayaScreen .play-rail {
-        grid-template-rows: 30px 30px minmax(0, 1fr) 48px 48px;
+        grid-template-rows: 30px 30px minmax(0, 1fr) 48px 14px 48px;
         gap: 6px;
         padding-bottom: 0;
       }
@@ -684,25 +684,25 @@
 
       .rail-exclude .mino-buttons {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 3px;
+        grid-template-columns: 1fr;
+        gap: 4px;
         margin: 0;
       }
 
       .rail-exclude .mino-buttons button {
-        min-height: 20px;
+        min-height: 36px;
         padding: 2px;
       }
 
       .rail-exclude .mino-icon {
-        grid-template-columns: repeat(4, 5px);
-        grid-auto-rows: 5px;
+        grid-template-columns: repeat(4, 8px);
+        grid-auto-rows: 8px;
         gap: 1px;
       }
 
       .rail-exclude .mino-icon-cell {
-        width: 5px;
-        height: 5px;
+        width: 8px;
+        height: 8px;
         border-radius: 2px;
       }
 
@@ -804,6 +804,10 @@
           <div class="play-rail left-rail">
             <button class="safe-home-button rail-button" id="izakayaHome">ホーム</button>
             <button class="ok rail-button" id="mealButton">1品完食</button>
+            <div class="rail-exclude">
+              <p class="rail-exclude-title">除外</p>
+              <div class="mino-buttons" id="excludeButtonsLeft"></div>
+            </div>
             <button class="control-button rail-top" id="izakayaRotate" data-icon="↻" disabled>回転</button>
             <button class="control-button rail-bottom" id="izakayaLeft" data-icon="←" disabled>左移動</button>
           </div>
@@ -821,7 +825,7 @@
             <button class="control-button rail-bottom" id="izakayaRight" data-icon="→" disabled>右移動</button>
             <div class="rail-exclude">
               <p class="rail-exclude-title">除外</p>
-              <div class="mino-buttons" id="excludeButtons"></div>
+              <div class="mino-buttons" id="excludeButtonsRight"></div>
             </div>
           </div>
         </div>
@@ -1457,9 +1461,9 @@
     }
 
     function renderExcludeButtons() {
-      const wrap = $("excludeButtons");
-      wrap.innerHTML = "";
-      TYPES.forEach(type => {
+      const wraps = [$("excludeButtonsLeft"), $("excludeButtonsRight")];
+      wraps.forEach(wrap => wrap.innerHTML = "");
+      TYPES.forEach((type, index) => {
         const button = document.createElement("button");
         button.title = `${type}ブロックを除外`;
         button.setAttribute("aria-label", `${type}ブロックを除外`);
@@ -1468,7 +1472,7 @@
         button.style.background = izakaya.excluded.includes(type) ? "#475569" : "#0f172a";
         button.style.boxShadow = izakaya.excluded.includes(type) ? "none" : `inset 0 0 0 2px ${COLORS[type]}`;
         button.addEventListener("click", () => excludeType(type));
-        wrap.appendChild(button);
+        wraps[index % wraps.length].appendChild(button);
       });
     }
 
