@@ -32,6 +32,17 @@
       touch-action: manipulation;
     }
 
+    html {
+      min-height: 100%;
+    }
+
+    html.game-locked,
+    html.game-locked body {
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -44,6 +55,15 @@
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       overflow-x: hidden;
+      overscroll-behavior-x: none;
+    }
+
+    body.game-locked {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      overflow: hidden;
+      touch-action: none;
     }
 
     body::before {
@@ -62,6 +82,12 @@
       width: min(1120px, 100%);
       margin: 0 auto;
       padding: max(18px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+
+    body.game-locked main {
+      height: 100svh;
+      height: 100dvh;
+      overflow: hidden;
     }
 
     h1, h2, h3, p {
@@ -213,10 +239,38 @@
       gap: 10px;
     }
 
+    .setup-layout {
+      grid-template-columns: minmax(0, auto) minmax(180px, 260px);
+    }
+
+    .setup-playfield {
+      display: grid;
+      grid-template-columns: auto minmax(0, auto) auto;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .setup-side-control {
+      display: grid;
+      gap: 8px;
+      align-content: center;
+    }
+
+    .setup-side-control .control-button {
+      width: 72px;
+      min-height: 72px;
+    }
+
     .board-wrap {
       display: grid;
       justify-items: center;
       gap: 6px;
+    }
+
+    .setup-board-wrap .target-note {
+      max-width: calc(var(--cell) * 10);
+      text-align: center;
     }
 
     .board-stage {
@@ -279,6 +333,14 @@
 
     .side-panel {
       padding: 12px;
+    }
+
+    .setup-stats {
+      display: none;
+    }
+
+    .setup-actions {
+      grid-template-columns: 1fr;
     }
 
     .side-panel h3 {
@@ -437,17 +499,125 @@
         --cell: min(8.4vw, 26px, max(13px, calc(5svh - 6.8px)));
       }
 
+      body.game-locked {
+        min-height: 100svh;
+        min-height: 100dvh;
+      }
+
       main {
         padding-top: max(10px, env(safe-area-inset-top));
+      }
+
+      body.game-locked main {
+        padding: max(6px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
       }
 
       h2 {
         margin-bottom: 8px;
       }
 
+      body.game-locked h2 {
+        margin-bottom: 5px;
+        font-size: 15px;
+        line-height: 1.15;
+      }
+
       .game-layout {
         grid-template-columns: 1fr;
         gap: 10px;
+      }
+
+      #setupScreen.active,
+      #izakayaScreen.active {
+        height: calc(100svh - max(6px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+        height: calc(100dvh - max(6px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+        overflow: hidden;
+        touch-action: none;
+      }
+
+      #setupScreen {
+        --cell: max(13px, min(calc(10vw - 12.8px), calc(5svh - 5.9px), 25px));
+      }
+
+      #setupScreen .setup-layout {
+        height: calc(100% - 22px);
+        display: grid;
+        grid-template-columns: 1fr;
+        align-content: start;
+        gap: 5px;
+      }
+
+      #setupScreen .setup-playfield {
+        grid-template-columns: 52px minmax(0, auto) 52px;
+        gap: 4px;
+      }
+
+      #setupScreen .setup-side-control {
+        gap: 6px;
+      }
+
+      #setupScreen .setup-side-control .control-button {
+        width: 52px;
+        min-height: 58px;
+        padding: 4px 2px;
+        border-radius: 999px;
+        font-size: 10px;
+      }
+
+      #setupScreen .setup-side-control .control-button::before {
+        width: 30px;
+        height: 30px;
+        font-size: 20px;
+      }
+
+      #setupScreen .setup-board-wrap {
+        gap: 3px;
+      }
+
+      #setupScreen .setup-board-wrap .target-note {
+        display: none;
+      }
+
+      #setupScreen .setup-panel {
+        width: min(100%, calc(var(--cell) * 10 + 112px));
+        justify-self: center;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        gap: 5px 8px;
+        padding: 6px;
+      }
+
+      #setupScreen .setup-panel h3 {
+        margin: 0;
+        font-size: 12px;
+      }
+
+      #setupScreen .preview {
+        width: 72px;
+        height: 54px;
+      }
+
+      #setupScreen .message {
+        grid-column: 2;
+        min-height: 16px;
+        margin: 0;
+        font-size: 11px;
+      }
+
+      #setupScreen .setup-actions {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 5px;
+        margin-top: 0;
+      }
+
+      #setupScreen .setup-actions button {
+        min-height: 30px;
+        padding: 4px 5px;
+        font-size: 11px;
+        border-radius: 7px;
       }
 
       .side-panel {
@@ -510,26 +680,30 @@
 
     <section id="setupScreen" class="screen">
       <h2>初期盤面作成</h2>
-      <div class="game-layout">
-        <div class="board-wrap">
-          <canvas id="setupBoard" width="300" height="600"></canvas>
-          <p class="target-note">ゲームオーバー時の盤面を自動保存します。</p>
+      <div class="game-layout setup-layout">
+        <div class="setup-playfield">
+          <div class="setup-side-control setup-left-rail">
+            <button class="control-button" id="setupLeft" data-icon="←">左移動</button>
+          </div>
+          <div class="board-wrap setup-board-wrap">
+            <canvas id="setupBoard" width="300" height="600"></canvas>
+            <p class="target-note">ゲームオーバー時の盤面を自動保存します。</p>
+          </div>
+          <div class="setup-side-control setup-right-rail">
+            <button class="control-button" id="setupRight" data-icon="→">右移動</button>
+            <button class="control-button" id="setupRotate" data-icon="↻">回転</button>
+            <button class="control-button primary" id="setupDrop" data-icon="✓">配置</button>
+          </div>
         </div>
-        <div class="card side-panel">
-          <div class="stats">
+        <div class="card side-panel setup-panel">
+          <div class="stats setup-stats">
             <div class="stat"><span>スコア</span><strong id="setupScore">0</strong></div>
             <div class="stat"><span>消去ライン数</span><strong id="setupLines">0</strong></div>
           </div>
           <h3>次のブロック</h3>
           <canvas class="preview" id="setupNext" width="112" height="92"></canvas>
           <p class="message" id="setupMessage"></p>
-          <div class="controls">
-            <button class="control-button" id="setupLeft" data-icon="←">左移動</button>
-            <button class="control-button" id="setupRight" data-icon="→">右移動</button>
-            <button class="control-button" id="setupRotate" data-icon="↻">回転</button>
-            <button class="control-button" id="setupDrop" data-icon="↓">高速落下</button>
-          </div>
-          <div class="inline-actions">
+          <div class="inline-actions setup-actions">
             <button id="setupPause">一時停止</button>
             <button id="setupRestart">もう一度作る</button>
             <button class="primary" id="setupStartIzakaya" disabled>本編を開始</button>
@@ -634,6 +808,7 @@
     const STORAGE_RESULTS = "izakayaBlocks.results";
     const LEGACY_STORAGE_BOARD = "izakaya" + "T" + "etris.savedBoard";
     const LEGACY_STORAGE_RESULTS = "izakaya" + "T" + "etris.results";
+    const SCROLL_LOCK_SCREENS = new Set(["setupScreen", "izakayaScreen"]);
     const TYPES = ["I", "O", "T", "S", "Z", "J", "L"];
     const COLORS = {
       I: "#00d4ff",
@@ -901,6 +1076,9 @@
     function showScreen(id) {
       document.querySelectorAll(".screen").forEach(screen => screen.classList.remove("active"));
       $(id).classList.add("active");
+      const locked = SCROLL_LOCK_SCREENS.has(id);
+      document.documentElement.classList.toggle("game-locked", locked);
+      document.body.classList.toggle("game-locked", locked);
     }
 
     function goHome() {
@@ -1246,6 +1424,9 @@
       $("giveUpButton").addEventListener("click", () => finishIzakaya(false, "ギブアップしました。"));
       $("resultRetry").addEventListener("click", startIzakayaFromSaved);
       document.addEventListener("keydown", handleKey);
+      document.addEventListener("touchmove", (event) => {
+        if (document.body.classList.contains("game-locked")) event.preventDefault();
+      }, { passive: false });
     }
 
     function handleKey(event) {
