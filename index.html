@@ -161,6 +161,20 @@
       cursor: not-allowed;
     }
 
+    .bulk-exclude-picker {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .bulk-exclude-picker label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+
     .screen {
       display: none;
     }
@@ -893,7 +907,7 @@
       <h2>操作確認</h2>
       <div class="card">
         <p id="actionMessage"></p>
-        <label>個数: <select id="bulkCount"></select></label>
+        <div id="bulkExcludePicker" class="bulk-exclude-picker"></div>
         <div class="inline-actions">
           <button class="primary" id="actionConfirm">決定</button>
           <button id="actionCancel">キャンセル</button>
@@ -1436,27 +1450,41 @@
     function openAction(message, onConfirm, showBulk = false) {
       pendingAction = onConfirm;
       $("actionMessage").textContent = message;
-      $("bulkCount").style.display = showBulk ? "inline-block" : "none";
+      $("bulkExcludePicker").style.display = showBulk ? "grid" : "none";
       showScreen("actionScreen");
     }
 
     function bulkExclude() {
       if (!izakaya.canChoose || izakaya.active) return;
-      const pool = TYPES.filter(type => !izakaya.excluded.includes(type));
-      if (!pool.length) return;
-      const sel = $("bulkCount");
-      sel.innerHTML = "";
-      for (let i=1;i<=Math.min(MAX_EXCLUDED_TYPES, pool.length);i++) { const o=document.createElement("option"); o.value=i; o.textContent=i; sel.appendChild(o);}
-      openAction("除外する個数を選んで決定してください。", () => {
-        const count = Number(sel.value);
-        const candidates = TYPES.filter(type => !izakaya.excluded.includes(type));
-        for (let i=0;i<count && candidates.length;i++) {
-          const idx = Math.floor(Math.random()*candidates.length);
-          izakaya.excluded.push(candidates.splice(idx,1)[0]);
+      const candidates = TYPES.filter(type => !izakaya.excluded.includes(type));
+      if (!candidates.length) return;
+      const picker = $("bulkExcludePicker");
+      picker.innerHTML = "";
+      candidates.forEach(type => {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = type;
+        label.appendChild(checkbox);
+        label.append(` ${type}ブロック`);
+        picker.appendChild(label);
+      });
+      openAction("まとめて除外するブロックを選んで決定してください。", () => {
+        const selected = [...picker.querySelectorAll("input:checked")].map(el => el.value).slice(0, MAX_EXCLUDED_TYPES);
+        if (!selected.length) {
+          $("izakayaMessage").textContent = "除外するブロックを選択してください。";
+          showScreen("izakayaScreen");
+          updateIzakayaView();
+          return;
         }
-        izakaya.canChoose = false; izakaya.canExclude = false;
-        $("izakayaMessage").textContent = `${count}個まとめて除外しました。次の料理を完食してください。`;
-        showScreen("izakayaScreen"); updateIzakayaView();
+        selected.forEach(type => {
+          if (!izakaya.excluded.includes(type) && izakaya.excluded.length < MAX_EXCLUDED_TYPES) izakaya.excluded.push(type);
+        });
+        izakaya.canChoose = false;
+        izakaya.canExclude = false;
+        $("izakayaMessage").textContent = `${selected.join(", ")} をまとめて除外しました。次の料理を完食してください。`;
+        showScreen("izakayaScreen");
+        updateIzakayaView();
       }, true);
     }
 
@@ -1498,6 +1526,10 @@
       izakaya.countdownLeft = null;
       if (cleared.targetCleared) {
         finishIzakaya(true, "攻略対象ラインを消去しました！");
+        return;
+      }
+      if (izakaya.board[IZAKAYA_EXTRA_ROWS].some(cell => cell)) {
+        finishIzakaya(false, "一番上まで積み上がったためゲームオーバーです。");
         return;
       }
       $("izakayaMessage").textContent = cleared.count
@@ -1600,7 +1632,7 @@
       });
       $("setupRestart").addEventListener("click", startSetup);
       $("setupStartIzakaya").addEventListener("click", startIzakayaFromSaved);
-      $("mealButton").addEventListener("click", () => openAction("1品完食として進めますか？", () => { mealFinished(); showScreen("izakayaScreen"); }));
+      $("mealButton").addEventListener("click", mealFinished);
       $("bulkExcludeButton").addEventListener("click", bulkExclude);
       $("drawPieceButton").addEventListener("click", drawIzakayaPiece);
       $("izakayaLeft").addEventListener("click", () => moveIzakaya(-1));
@@ -1624,7 +1656,7 @@
     
     function enableRepeat(buttonId, action) {
       const btn = $(buttonId); let timer = null;
-      const start = () => { action(); timer = setInterval(action, 90); };
+      const start = () => { action(); timer = setInterval(action, 160); };
       const stop = () => { clearInterval(timer); timer = null; };
       btn.addEventListener("pointerdown", start);
       ["pointerup","pointerleave","pointercancel"].forEach(ev => btn.addEventListener(ev, stop));
