@@ -760,13 +760,13 @@
           <span>初期盤面を作る<span class="button-sub">落ちものブロックで盤面を作成</span></span>
         </button>
         <button id="startSavedButton" data-icon="▣">
-          <span>保存済み盤面から始める<span class="button-sub">過去に保存した盤面で開始</span></span>
+          <span>保存済み盤面から始める<span class="button-sub">作成済み盤面ですぐ本編へ</span></span>
+        </button>
+        <button id="autoSetupButton" data-icon="⚙">
+          <span>自動で初期盤面を作る<span class="button-sub">ランダム盤面を即作成して本編へ</span></span>
         </button>
         <button id="rulesButton" data-icon="?">
           <span>ルールを見る<span class="button-sub">遊び方と勝利条件を確認</span></span>
-        </button>
-        <button id="historyButton" data-icon="↗">
-          <span>過去の結果を見る<span class="button-sub">プレイ履歴と記録を確認</span></span>
         </button>
       </div>
     </section>
@@ -811,6 +811,7 @@
           <div class="play-rail left-rail">
             <button class="safe-home-button rail-button" id="izakayaHome">ホーム</button>
             <button class="ok rail-button" id="mealButton">1品完食</button>
+            <button class="rail-button" id="bulkExcludeButton">まとめて除外</button>
             <div class="rail-exclude">
               <p class="rail-exclude-title">除外</p>
               <div class="mino-buttons" id="excludeButtonsLeft"></div>
@@ -852,6 +853,7 @@
 
     <section id="resultScreen" class="screen">
       <h2 id="resultTitle">結果</h2>
+      <p id="resultMessage" class="target-note"></p>
       <div class="card">
         <div class="stats">
           <div class="stat"><span>完食数</span><strong id="resultMeals">0</strong></div>
@@ -885,11 +887,17 @@
       </div>
     </section>
 
-    <section id="historyScreen" class="screen">
-      <h2>過去の結果</h2>
+    
+
+    <section id="actionScreen" class="screen">
+      <h2>操作確認</h2>
       <div class="card">
-        <div class="history-list" id="historyList"></div>
-        <button id="historyHome">ホーム</button>
+        <p id="actionMessage"></p>
+        <label>個数: <select id="bulkCount"></select></label>
+        <div class="inline-actions">
+          <button class="primary" id="actionConfirm">決定</button>
+          <button id="actionCancel">キャンセル</button>
+        </div>
       </div>
     </section>
   </main>
@@ -903,10 +911,8 @@
     const COUNTDOWN_SECONDS = 10;
     const MAX_EXCLUDED_TYPES = 6;
     const STORAGE_BOARD = "izakayaBlocks.savedBoard";
-    const STORAGE_RESULTS = "izakayaBlocks.results";
-    const LEGACY_STORAGE_BOARD = "izakaya" + "T" + "etris.savedBoard";
-    const LEGACY_STORAGE_RESULTS = "izakaya" + "T" + "etris.results";
-    const SCROLL_LOCK_SCREENS = new Set(["setupScreen", "izakayaScreen"]);
+        const LEGACY_STORAGE_BOARD = "izakaya" + "T" + "etris.savedBoard";
+        const SCROLL_LOCK_SCREENS = new Set(["setupScreen", "izakayaScreen"]);
     const TYPES = ["I", "O", "T", "S", "Z", "J", "L"];
     const COLORS = {
       I: "#00d4ff",
@@ -938,6 +944,8 @@
 
     let setup = {};
     let izakaya = {};
+    let pendingAction = null;
+    let previousScreen = "homeScreen";
 
     function emptyBoard(height = HEIGHT) {
       return Array.from({ length: height }, () => Array(WIDTH).fill(null));
@@ -1207,6 +1215,8 @@
     }
 
     function showScreen(id) {
+      const current = document.querySelector(".screen.active")?.id;
+      if (current && current !== id) previousScreen = current;
       document.querySelectorAll(".screen").forEach(screen => screen.classList.remove("active"));
       $(id).classList.add("active");
       const locked = SCROLL_LOCK_SCREENS.has(id);
@@ -1254,6 +1264,21 @@
       }
     }
 
+    
+    function autoCreateSetupAndStart() {
+      setup = { board: emptyBoard(), current: createPiece(), next: randomType(), score:0, lines:0, paused:false, over:false, timer:null };
+      for (let i=0;i<32;i++) {
+        setup.current.x = Math.max(0, Math.min(WIDTH-setup.current.shape[0].length, Math.floor(Math.random()*WIDTH)-1));
+        while (canPlace(setup.board, setup.current, 0, 1)) setup.current.y++;
+        if (setup.current.y < 0) break;
+        mergePiece(setup.board, setup.current);
+        clearLines(setup.board);
+        setup.current = createPiece(randomType());
+      }
+      saveSetupBoard();
+      startIzakayaFromSaved();
+    }
+
     function startSetup() {
       clearInterval(setup.timer);
       setup = {
@@ -1294,7 +1319,7 @@
         setup.over = true;
         clearInterval(setup.timer);
         saveSetupBoard();
-        $("setupMessage").textContent = "ゲームオーバー。盤面を保存しました。";
+        $("setupMessage").textContent = "最上段まで到達。盤面保存済みです。『本編開始』を押してください。";
       }
     }
 
@@ -1379,7 +1404,6 @@
       }
       const type = pool[Math.floor(Math.random() * pool.length)];
       izakaya.current = createPiece(type, 0);
-      izakaya.excluded = [];
       izakaya.canChoose = false;
       izakaya.canExclude = false;
       izakaya.active = true;
@@ -1406,6 +1430,34 @@
       izakaya.canExclude = false;
       $("izakayaMessage").textContent = `${type} ブロックを除外しました。次の料理を完食してください。`;
       updateIzakayaView();
+    }
+
+    
+    function openAction(message, onConfirm, showBulk = false) {
+      pendingAction = onConfirm;
+      $("actionMessage").textContent = message;
+      $("bulkCount").style.display = showBulk ? "inline-block" : "none";
+      showScreen("actionScreen");
+    }
+
+    function bulkExclude() {
+      if (!izakaya.canChoose || izakaya.active) return;
+      const pool = TYPES.filter(type => !izakaya.excluded.includes(type));
+      if (!pool.length) return;
+      const sel = $("bulkCount");
+      sel.innerHTML = "";
+      for (let i=1;i<=Math.min(MAX_EXCLUDED_TYPES, pool.length);i++) { const o=document.createElement("option"); o.value=i; o.textContent=i; sel.appendChild(o);}
+      openAction("除外する個数を選んで決定してください。", () => {
+        const count = Number(sel.value);
+        const candidates = TYPES.filter(type => !izakaya.excluded.includes(type));
+        for (let i=0;i<count && candidates.length;i++) {
+          const idx = Math.floor(Math.random()*candidates.length);
+          izakaya.excluded.push(candidates.splice(idx,1)[0]);
+        }
+        izakaya.canChoose = false; izakaya.canExclude = false;
+        $("izakayaMessage").textContent = `${count}個まとめて除外しました。次の料理を完食してください。`;
+        showScreen("izakayaScreen"); updateIzakayaView();
+      }, true);
     }
 
     function moveIzakaya(dx) {
@@ -1468,15 +1520,10 @@
         targetMask: cloneMask(izakaya.targetMask),
         endedAt: new Date().toISOString()
       };
-      saveResult(result);
       showResult(result);
     }
 
-    function saveResult(result) {
-      const results = JSON.parse(localStorage.getItem(STORAGE_RESULTS) || localStorage.getItem(LEGACY_STORAGE_RESULTS) || "[]");
-      results.unshift(result);
-      localStorage.setItem(STORAGE_RESULTS, JSON.stringify(results.slice(0, 20)));
-    }
+    function saveResult(result) {}
 
     function showResult(result) {
       $("resultTitle").textContent = result.clear ? "クリア！" : "ゲームオーバー";
@@ -1485,6 +1532,7 @@
       $("resultExcluded").textContent = result.excluded;
       $("resultLines").textContent = result.lines;
       $("resultTime").textContent = `${result.seconds}秒`;
+      $("resultMessage").textContent = result.message;
       drawBoard(resultCtx, result.board, null, result.targetMask);
       showScreen("resultScreen");
     }
@@ -1524,23 +1572,7 @@
       });
     }
 
-    function showHistory() {
-      const results = JSON.parse(localStorage.getItem(STORAGE_RESULTS) || localStorage.getItem(LEGACY_STORAGE_RESULTS) || "[]");
-      const list = $("historyList");
-      list.innerHTML = "";
-      if (!results.length) {
-        list.textContent = "過去の結果はまだありません。";
-      } else {
-        results.forEach(result => {
-          const item = document.createElement("div");
-          item.className = "history-item";
-          const date = new Date(result.endedAt).toLocaleString("ja-JP");
-          item.textContent = `${date} / ${result.clear ? "クリア" : "ゲームオーバー"} / 完食${result.meals} / 配置${result.placed} / ${result.seconds}秒`;
-          list.appendChild(item);
-        });
-      }
-      showScreen("historyScreen");
-    }
+    function showHistory() {}
 
     function bindEvents() {
       let lastTouchEnd = 0;
@@ -1550,12 +1582,11 @@
         lastTouchEnd = now;
       }, { passive: false });
       $("newSetupButton").addEventListener("click", startSetup);
+      $("autoSetupButton").addEventListener("click", autoCreateSetupAndStart);
       $("startSavedButton").addEventListener("click", startIzakayaFromSaved);
       $("rulesButton").addEventListener("click", () => showScreen("rulesScreen"));
-      $("historyButton").addEventListener("click", showHistory);
-      $("rulesHome").addEventListener("click", () => showScreen("homeScreen"));
-      $("historyHome").addEventListener("click", () => showScreen("homeScreen"));
-      $("setupHome").addEventListener("click", confirmGoHome);
+            $("rulesHome").addEventListener("click", () => showScreen("homeScreen"));
+            $("setupHome").addEventListener("click", confirmGoHome);
       $("izakayaHome").addEventListener("click", confirmGoHome);
       $("resultHome").addEventListener("click", goHome);
       $("setupLeft").addEventListener("click", () => moveSetup(-1));
@@ -1569,18 +1600,34 @@
       });
       $("setupRestart").addEventListener("click", startSetup);
       $("setupStartIzakaya").addEventListener("click", startIzakayaFromSaved);
-      $("mealButton").addEventListener("click", mealFinished);
+      $("mealButton").addEventListener("click", () => openAction("1品完食として進めますか？", () => { mealFinished(); showScreen("izakayaScreen"); }));
+      $("bulkExcludeButton").addEventListener("click", bulkExclude);
       $("drawPieceButton").addEventListener("click", drawIzakayaPiece);
       $("izakayaLeft").addEventListener("click", () => moveIzakaya(-1));
       $("izakayaRight").addEventListener("click", () => moveIzakaya(1));
       $("izakayaRotate").addEventListener("click", rotateIzakaya);
       $("confirmPiece").addEventListener("click", confirmIzakayaPiece);
-      $("giveUpButton").addEventListener("click", confirmGiveUp);
+      $("giveUpButton").addEventListener("click", () => openAction("ギブアップしますか？", () => { finishIzakaya(false, "ギブアップしました。"); }, false));
+      $("actionConfirm").addEventListener("click", () => { if (pendingAction) pendingAction(); pendingAction = null; });
+      $("actionCancel").addEventListener("click", () => { pendingAction = null; showScreen(previousScreen || "homeScreen"); });
       $("resultRetry").addEventListener("click", startIzakayaFromSaved);
       document.addEventListener("keydown", handleKey);
+      enableRepeat("setupLeft", () => moveSetup(-1));
+      enableRepeat("setupRight", () => moveSetup(1));
+      enableRepeat("izakayaLeft", () => moveIzakaya(-1));
+      enableRepeat("izakayaRight", () => moveIzakaya(1));
       document.addEventListener("touchmove", (event) => {
         if (document.body.classList.contains("game-locked")) event.preventDefault();
       }, { passive: false });
+    }
+
+    
+    function enableRepeat(buttonId, action) {
+      const btn = $(buttonId); let timer = null;
+      const start = () => { action(); timer = setInterval(action, 90); };
+      const stop = () => { clearInterval(timer); timer = null; };
+      btn.addEventListener("pointerdown", start);
+      ["pointerup","pointerleave","pointercancel"].forEach(ev => btn.addEventListener(ev, stop));
     }
 
     function handleKey(event) {
