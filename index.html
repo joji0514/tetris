@@ -1306,6 +1306,7 @@
         timer: null
       };
       $("setupMessage").textContent = "";
+      $("setupStartIzakaya").textContent = "本編開始";
       $("setupStartIzakaya").disabled = !loadSavedBoard();
       setup.timer = setInterval(setupTick, SETUP_TICK_MS);
       updateSetupView();
@@ -1333,7 +1334,10 @@
         setup.over = true;
         clearInterval(setup.timer);
         saveSetupBoard();
-        $("setupMessage").textContent = "最上段まで到達。盤面保存済みです。『本編開始』を押してください。";
+        const startButton = $("setupStartIzakaya");
+        startButton.disabled = false;
+        startButton.textContent = "本編開始（準備完了）";
+        $("setupMessage").textContent = "最上段まで到達しました。盤面は保存済みです。右の『本編開始（準備完了）』を押してゲームを開始してください。";
       }
     }
 
@@ -1528,8 +1532,11 @@
         finishIzakaya(true, "攻略対象ラインを消去しました！");
         return;
       }
-      if (izakaya.board[IZAKAYA_EXTRA_ROWS].some(cell => cell)) {
-        finishIzakaya(false, "一番上まで積み上がったためゲームオーバーです。");
+      const overflowed = izakaya.board
+        .slice(0, IZAKAYA_EXTRA_ROWS)
+        .some(row => row.some(cell => cell));
+      if (overflowed) {
+        finishIzakaya(false, "盤面外（隠し行）まで積み上がったためゲームオーバーです。");
         return;
       }
       $("izakayaMessage").textContent = cleared.count
