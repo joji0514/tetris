@@ -290,11 +290,11 @@
     }
 
     .rail-top {
-      grid-row: 4;
+      grid-row: 5;
     }
 
     .rail-bottom {
-      grid-row: 6;
+      grid-row: 7;
       align-self: end;
     }
 
@@ -394,6 +394,10 @@
       gap: 4px;
       grid-row: 3;
       align-self: end;
+    }
+
+    #bulkExcludeButton {
+      grid-row: 4;
     }
 
     .rail-exclude-title {
@@ -782,6 +786,8 @@
         <button id="rulesButton" data-icon="?">
           <span>ルールを見る<span class="button-sub">遊び方と勝利条件を確認</span></span>
         </button>
+        <label for="autoSetupRows">積み上げ段数（5〜18段）</label>
+        <select id="autoSetupRows"></select>
       </div>
     </section>
 
@@ -919,11 +925,14 @@
   <script>
     const WIDTH = 10;
     const HEIGHT = 20;
-    const IZAKAYA_EXTRA_ROWS = 4;
+    const IZAKAYA_EXTRA_ROWS = 0;
     const CELL = 30;
     const SETUP_TICK_MS = 520;
     const COUNTDOWN_SECONDS = 10;
     const MAX_EXCLUDED_TYPES = 6;
+    const AUTO_SETUP_MIN_STACK_ROWS = 5;
+    const AUTO_SETUP_MAX_STACK_ROWS = 18;
+    const AUTO_SETUP_DEFAULT_STACK_ROWS = 10;
     const STORAGE_BOARD = "izakayaBlocks.savedBoard";
         const LEGACY_STORAGE_BOARD = "izakaya" + "T" + "etris.savedBoard";
         const SCROLL_LOCK_SCREENS = new Set(["setupScreen", "izakayaScreen"]);
@@ -1278,10 +1287,31 @@
       }
     }
 
-    
+    function getCurrentStackRows(board) {
+      let firstFilledRow = board.length;
+      for (let y = 0; y < board.length; y++) {
+        if (board[y].some(cell => cell)) {
+          firstFilledRow = y;
+          break;
+        }
+      }
+      return board.length - firstFilledRow;
+    }
+
+    function getAutoSetupTargetRows() {
+      const value = Number($("autoSetupRows").value);
+      if (Number.isFinite(value)) {
+        return Math.max(AUTO_SETUP_MIN_STACK_ROWS, Math.min(AUTO_SETUP_MAX_STACK_ROWS, value));
+      }
+      return AUTO_SETUP_DEFAULT_STACK_ROWS;
+    }
+
     function autoCreateSetupAndStart() {
       setup = { board: emptyBoard(), current: createPiece(), next: randomType(), score:0, lines:0, paused:false, over:false, timer:null };
-      for (let i=0;i<32;i++) {
+      const targetRows = getAutoSetupTargetRows();
+      let guard = 0;
+      while (getCurrentStackRows(setup.board) < targetRows && guard < 200) {
+        guard += 1;
         setup.current.x = Math.max(0, Math.min(WIDTH-setup.current.shape[0].length, Math.floor(Math.random()*WIDTH)-1));
         while (canPlace(setup.board, setup.current, 0, 1)) setup.current.y++;
         if (setup.current.y < 0) break;
@@ -1620,6 +1650,14 @@
         if (now - lastTouchEnd < 350) event.preventDefault();
         lastTouchEnd = now;
       }, { passive: false });
+      const autoSetupRows = $("autoSetupRows");
+      for (let rows = AUTO_SETUP_MIN_STACK_ROWS; rows <= AUTO_SETUP_MAX_STACK_ROWS; rows++) {
+        const option = document.createElement("option");
+        option.value = String(rows);
+        option.textContent = `${rows}段`;
+        autoSetupRows.appendChild(option);
+      }
+      autoSetupRows.value = String(AUTO_SETUP_DEFAULT_STACK_ROWS);
       $("newSetupButton").addEventListener("click", startSetup);
       $("autoSetupButton").addEventListener("click", autoCreateSetupAndStart);
       $("startSavedButton").addEventListener("click", startIzakayaFromSaved);
