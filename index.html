@@ -786,8 +786,6 @@
         <button id="rulesButton" data-icon="?">
           <span>ルールを見る<span class="button-sub">遊び方と勝利条件を確認</span></span>
         </button>
-        <label for="autoSetupRows">積み上げ段数（5〜18段）</label>
-        <select id="autoSetupRows"></select>
       </div>
     </section>
 
@@ -913,6 +911,8 @@
       <h2>操作確認</h2>
       <div class="card">
         <p id="actionMessage"></p>
+        <label for="actionAutoSetupRows" id="actionAutoSetupRowsLabel" style="display:none;">積み上げ段数（5〜15段）</label>
+        <select id="actionAutoSetupRows" style="display:none;"></select>
         <div id="bulkExcludePicker" class="bulk-exclude-picker"></div>
         <div class="inline-actions">
           <button class="primary" id="actionConfirm">決定</button>
@@ -924,14 +924,15 @@
 
   <script>
     const WIDTH = 10;
-    const HEIGHT = 20;
-    const IZAKAYA_EXTRA_ROWS = 0;
+    const SETUP_HEIGHT = 15;
+    const IZAKAYA_HEIGHT = 20;
+    const IZAKAYA_EXTRA_ROWS = IZAKAYA_HEIGHT - SETUP_HEIGHT;
     const CELL = 30;
     const SETUP_TICK_MS = 520;
     const COUNTDOWN_SECONDS = 10;
     const MAX_EXCLUDED_TYPES = 6;
     const AUTO_SETUP_MIN_STACK_ROWS = 5;
-    const AUTO_SETUP_MAX_STACK_ROWS = 18;
+    const AUTO_SETUP_MAX_STACK_ROWS = 15;
     const AUTO_SETUP_DEFAULT_STACK_ROWS = 10;
     const STORAGE_BOARD = "izakayaBlocks.savedBoard";
         const LEGACY_STORAGE_BOARD = "izakaya" + "T" + "etris.savedBoard";
@@ -970,11 +971,11 @@
     let pendingAction = null;
     let previousScreen = "homeScreen";
 
-    function emptyBoard(height = HEIGHT) {
+    function emptyBoard(height = SETUP_HEIGHT) {
       return Array.from({ length: height }, () => Array(WIDTH).fill(null));
     }
 
-    function emptyMask(height = HEIGHT) {
+    function emptyMask(height = SETUP_HEIGHT) {
       return Array.from({ length: height }, () => Array(WIDTH).fill(false));
     }
 
@@ -1265,7 +1266,7 @@
 
     function saveSetupBoard() {
       const targetMask = emptyMask();
-      targetMask[HEIGHT - 1] = Array(WIDTH).fill(true);
+      targetMask[SETUP_HEIGHT - 1] = Array(WIDTH).fill(true);
       const payload = {
         board: cloneBoard(setup.board),
         targetMask,
@@ -1299,7 +1300,7 @@
     }
 
     function getAutoSetupTargetRows() {
-      const value = Number($("autoSetupRows").value);
+      const value = Number($("actionAutoSetupRows").value);
       if (Number.isFinite(value)) {
         return Math.max(AUTO_SETUP_MIN_STACK_ROWS, Math.min(AUTO_SETUP_MAX_STACK_ROWS, value));
       }
@@ -1321,6 +1322,16 @@
       }
       saveSetupBoard();
       startIzakayaFromSaved();
+    }
+
+    function openAutoSetupRowsPicker() {
+      const autoSetupRows = $("actionAutoSetupRows");
+      autoSetupRows.style.display = "block";
+      $("actionAutoSetupRowsLabel").style.display = "block";
+      autoSetupRows.value = String(AUTO_SETUP_DEFAULT_STACK_ROWS);
+      openAction("積み上げ段数を選んで決定してください。", () => {
+        autoCreateSetupAndStart();
+      }, false);
     }
 
     function startSetup() {
@@ -1485,6 +1496,8 @@
       pendingAction = onConfirm;
       $("actionMessage").textContent = message;
       $("bulkExcludePicker").style.display = showBulk ? "grid" : "none";
+      $("actionAutoSetupRows").style.display = "none";
+      $("actionAutoSetupRowsLabel").style.display = "none";
       showScreen("actionScreen");
     }
 
@@ -1650,7 +1663,7 @@
         if (now - lastTouchEnd < 350) event.preventDefault();
         lastTouchEnd = now;
       }, { passive: false });
-      const autoSetupRows = $("autoSetupRows");
+      const autoSetupRows = $("actionAutoSetupRows");
       for (let rows = AUTO_SETUP_MIN_STACK_ROWS; rows <= AUTO_SETUP_MAX_STACK_ROWS; rows++) {
         const option = document.createElement("option");
         option.value = String(rows);
@@ -1659,7 +1672,7 @@
       }
       autoSetupRows.value = String(AUTO_SETUP_DEFAULT_STACK_ROWS);
       $("newSetupButton").addEventListener("click", startSetup);
-      $("autoSetupButton").addEventListener("click", autoCreateSetupAndStart);
+      $("autoSetupButton").addEventListener("click", openAutoSetupRowsPicker);
       $("startSavedButton").addEventListener("click", startIzakayaFromSaved);
       $("rulesButton").addEventListener("click", () => showScreen("rulesScreen"));
             $("rulesHome").addEventListener("click", () => showScreen("homeScreen"));
