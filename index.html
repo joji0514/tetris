@@ -831,7 +831,7 @@
             <button class="ok rail-button" id="mealButton">1品完食</button>
             <button class="rail-button" id="bulkExcludeButton">まとめて除外</button>
             <div class="rail-exclude">
-              <p class="rail-exclude-title">除外</p>
+              <p class="rail-exclude-title">除外ブロック一覧</p>
               <div class="mino-buttons" id="excludeButtonsLeft"></div>
             </div>
             <button class="control-button rail-top" id="izakayaRotate" data-icon="↻" disabled>回転</button>
@@ -850,7 +850,7 @@
             <button class="control-button primary rail-top" id="confirmPiece" data-icon="✓" disabled>配置確定</button>
             <button class="control-button rail-bottom" id="izakayaRight" data-icon="→" disabled>右移動</button>
             <div class="rail-exclude">
-              <p class="rail-exclude-title">除外</p>
+              <p class="rail-exclude-title">除外ブロック一覧</p>
               <div class="mino-buttons" id="excludeButtonsRight"></div>
             </div>
           </div>
@@ -1501,10 +1501,15 @@
       showScreen("actionScreen");
     }
 
+
+    function getBulkExcludeCandidates() {
+      return TYPES.filter(type => !izakaya.excluded.includes(type));
+    }
+
     function bulkExclude() {
       if (izakaya.active) return;
-      const candidates = TYPES.filter(type => !izakaya.excluded.includes(type));
-      if (!candidates.length) return;
+      const candidates = getBulkExcludeCandidates();
+      if (!candidates.length || izakaya.excluded.length >= MAX_EXCLUDED_TYPES) return;
       const picker = $("bulkExcludePicker");
       picker.innerHTML = "";
       candidates.forEach(type => {
@@ -1632,7 +1637,8 @@
       $("izakayaLines").textContent = izakaya.lines;
       $("mealButton").disabled = izakaya.active || izakaya.canChoose;
       $("drawPieceButton").disabled = !izakaya.canChoose || izakaya.active;
-      $("bulkExcludeButton").disabled = izakaya.active || izakaya.excluded.length >= MAX_EXCLUDED_TYPES || TYPES.every(type => izakaya.excluded.includes(type));
+      const hasBulkExcludeCandidates = getBulkExcludeCandidates().length > 0;
+      $("bulkExcludeButton").disabled = izakaya.active || izakaya.excluded.length >= MAX_EXCLUDED_TYPES || !hasBulkExcludeCandidates;
       $("izakayaLeft").disabled = !izakaya.active;
       $("izakayaRight").disabled = !izakaya.active;
       $("izakayaRotate").disabled = !izakaya.active;
