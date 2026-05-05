@@ -926,7 +926,8 @@
     const WIDTH = 10;
     const SETUP_HEIGHT = 15;
     const IZAKAYA_HEIGHT = 20;
-    const IZAKAYA_EXTRA_ROWS = IZAKAYA_HEIGHT - SETUP_HEIGHT;
+    const IZAKAYA_GAMEOVER_ROWS = 20;
+    const IZAKAYA_EXTRA_ROWS = Math.max(0, IZAKAYA_HEIGHT - SETUP_HEIGHT);
     const CELL = 30;
     const SETUP_TICK_MS = 520;
     const COUNTDOWN_SECONDS = 10;
@@ -1326,12 +1327,10 @@
 
     function openAutoSetupRowsPicker() {
       const autoSetupRows = $("actionAutoSetupRows");
-      autoSetupRows.style.display = "block";
-      $("actionAutoSetupRowsLabel").style.display = "block";
       autoSetupRows.value = String(AUTO_SETUP_DEFAULT_STACK_ROWS);
       openAction("積み上げ段数を選んで決定してください。", () => {
         autoCreateSetupAndStart();
-      }, false);
+      }, { showAutoRows: true });
     }
 
     function startSetup() {
@@ -1492,12 +1491,13 @@
     }
 
     
-    function openAction(message, onConfirm, showBulk = false) {
+    function openAction(message, onConfirm, options = {}) {
+      const { showBulk = false, showAutoRows = false } = options;
       pendingAction = onConfirm;
       $("actionMessage").textContent = message;
       $("bulkExcludePicker").style.display = showBulk ? "grid" : "none";
-      $("actionAutoSetupRows").style.display = "none";
-      $("actionAutoSetupRowsLabel").style.display = "none";
+      $("actionAutoSetupRows").style.display = showAutoRows ? "block" : "none";
+      $("actionAutoSetupRowsLabel").style.display = showAutoRows ? "block" : "none";
       showScreen("actionScreen");
     }
 
@@ -1532,7 +1532,7 @@
         $("izakayaMessage").textContent = `${selected.join(", ")} をまとめて除外しました。次の料理を完食してください。`;
         showScreen("izakayaScreen");
         updateIzakayaView();
-      }, true);
+      }, { showBulk: true });
     }
 
     function moveIzakaya(dx) {
@@ -1575,8 +1575,9 @@
         finishIzakaya(true, "攻略対象ラインを消去しました！");
         return;
       }
+      const gameOverTopRow = Math.max(0, izakaya.board.length - IZAKAYA_GAMEOVER_ROWS);
       const overflowed = izakaya.board
-        .slice(0, IZAKAYA_EXTRA_ROWS)
+        .slice(0, gameOverTopRow)
         .some(row => row.some(cell => cell));
       if (overflowed) {
         finishIzakaya(false, "盤面外（隠し行）まで積み上がったためゲームオーバーです。");
@@ -1697,7 +1698,7 @@
       $("izakayaRight").addEventListener("click", () => moveIzakaya(1));
       $("izakayaRotate").addEventListener("click", rotateIzakaya);
       $("confirmPiece").addEventListener("click", confirmIzakayaPiece);
-      $("giveUpButton").addEventListener("click", () => openAction("ギブアップしますか？", () => { finishIzakaya(false, "ギブアップしました。"); }, false));
+      $("giveUpButton").addEventListener("click", () => openAction("ギブアップしますか？", () => { finishIzakaya(false, "ギブアップしました。"); }));
       $("actionConfirm").addEventListener("click", () => { if (pendingAction) pendingAction(); pendingAction = null; });
       $("actionCancel").addEventListener("click", () => { pendingAction = null; showScreen(previousScreen || "homeScreen"); });
       $("resultRetry").addEventListener("click", startIzakayaFromSaved);
