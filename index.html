@@ -392,12 +392,12 @@
     .rail-exclude {
       display: grid;
       gap: 4px;
-      grid-row: 3;
+      grid-row: 4;
       align-self: end;
     }
 
     #bulkExcludeButton {
-      grid-row: 4;
+      grid-row: 3;
     }
 
     .rail-exclude-title {
@@ -1502,7 +1502,7 @@
     }
 
     function bulkExclude() {
-      if (!izakaya.canChoose || izakaya.active) return;
+      if (izakaya.active) return;
       const candidates = TYPES.filter(type => !izakaya.excluded.includes(type));
       if (!candidates.length) return;
       const picker = $("bulkExcludePicker");
@@ -1632,6 +1632,7 @@
       $("izakayaLines").textContent = izakaya.lines;
       $("mealButton").disabled = izakaya.active || izakaya.canChoose;
       $("drawPieceButton").disabled = !izakaya.canChoose || izakaya.active;
+      $("bulkExcludeButton").disabled = izakaya.active || izakaya.excluded.length >= MAX_EXCLUDED_TYPES || TYPES.every(type => izakaya.excluded.includes(type));
       $("izakayaLeft").disabled = !izakaya.active;
       $("izakayaRight").disabled = !izakaya.active;
       $("izakayaRotate").disabled = !izakaya.active;
