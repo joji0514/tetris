@@ -625,9 +625,14 @@
         gap: 4px;
       }
 
-      #setupScreen .setup-side-control,
-      #izakayaScreen .play-rail {
+      #setupScreen .setup-side-control {
         grid-template-rows: 30px 30px minmax(36px, 1fr) 52px minmax(28px, 0.45fr) 52px;
+        gap: 6px;
+        padding-bottom: 0;
+      }
+
+      #izakayaScreen .play-rail {
+        grid-template-rows: 30px 30px minmax(44px, 1fr) minmax(84px, auto) minmax(28px, 0.45fr) 52px;
         gap: 6px;
         padding-bottom: 0;
       }
