@@ -1692,8 +1692,6 @@
             $("setupHome").addEventListener("click", confirmGoHome);
       $("izakayaHome").addEventListener("click", confirmGoHome);
       $("resultHome").addEventListener("click", goHome);
-      $("setupLeft").addEventListener("click", () => moveSetup(-1));
-      $("setupRight").addEventListener("click", () => moveSetup(1));
       $("setupRotate").addEventListener("click", rotateSetup);
       $("setupDrop").addEventListener("click", hardDropSetup);
       $("setupPause").addEventListener("click", () => {
@@ -1706,8 +1704,6 @@
       $("mealButton").addEventListener("click", mealFinished);
       $("bulkExcludeButton").addEventListener("click", bulkExclude);
       $("drawPieceButton").addEventListener("click", drawIzakayaPiece);
-      $("izakayaLeft").addEventListener("click", () => moveIzakaya(-1));
-      $("izakayaRight").addEventListener("click", () => moveIzakaya(1));
       $("izakayaRotate").addEventListener("click", rotateIzakaya);
       $("confirmPiece").addEventListener("click", confirmIzakayaPiece);
       $("giveUpButton").addEventListener("click", () => openAction("ギブアップしますか？", () => { finishIzakaya(false, "ギブアップしました。"); }));
@@ -1726,11 +1722,29 @@
 
     
     function enableRepeat(buttonId, action) {
-      const btn = $(buttonId); let timer = null;
-      const start = () => { action(); timer = setInterval(action, 160); };
-      const stop = () => { clearInterval(timer); timer = null; };
+      const btn = $(buttonId);
+      let timer = null;
+      let suppressNextClick = false;
+      const start = (event) => {
+        event.preventDefault();
+        action();
+        timer = setInterval(action, 160);
+        suppressNextClick = true;
+      };
+      const stop = () => {
+        clearInterval(timer);
+        timer = null;
+      };
       btn.addEventListener("pointerdown", start);
       ["pointerup","pointerleave","pointercancel"].forEach(ev => btn.addEventListener(ev, stop));
+      btn.addEventListener("click", (event) => {
+        if (suppressNextClick) {
+          event.preventDefault();
+          suppressNextClick = false;
+          return;
+        }
+        action();
+      });
     }
 
     function handleKey(event) {
